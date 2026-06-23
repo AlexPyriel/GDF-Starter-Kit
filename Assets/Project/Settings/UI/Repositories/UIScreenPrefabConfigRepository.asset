@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e523c9f9a4c43e880f89e0f0dcb43e4, type: 3}
+  m_Name: UIScreenPrefabConfigRepository
+  m_EditorClassIdentifier: Assembly-CSharp::Project.Shared.UI.Configuration.UIScreenPrefabConfigRepository
+  _configs:
+    _serializedList:
+    - Key: Assets.Project.Features.Scenes.Loading.LoadingSceneView
+      Value:
+        _id: Assets.Project.Features.Scenes.Loading.LoadingSceneView
+        _prefabReference:
+          m_AssetGUID: 63549d2f673b48b28921660a22a51e4a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        _viewScript: {fileID: 11500000, guid: 48c5c552210e48e5aaa8303164a59711, type: 3}
+    - Key: Assets.Project.Features.Scenes.Home.HomeSceneView
+      Value:
+        _id: Assets.Project.Features.Scenes.Home.HomeSceneView
+        _prefabReference:
+          m_AssetGUID: 8fb9e2bbf3924c989b1e57ebdb4477e1
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        _viewScript: {fileID: 11500000, guid: f69b1c865d294b3187874ac816746736, type: 3}
+    - Key: Assets.Project.Features.Scenes.Game.GameSceneView
+      Value:
+        _id: Assets.Project.Features.Scenes.Game.GameSceneView
+        _prefabReference:
+          m_AssetGUID: 9e5c4c5850fe4cd8a97f0f5360858a52
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        _viewScript: {fileID: 11500000, guid: 5dec2378a11746d39836950f8b821a43, type: 3}

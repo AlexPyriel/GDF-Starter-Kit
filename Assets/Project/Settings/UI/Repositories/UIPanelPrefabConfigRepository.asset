@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f8380e7c1c14d6ebc76d1fe22fd8b97, type: 3}
+  m_Name: UIPanelPrefabConfigRepository
+  m_EditorClassIdentifier: Assembly-CSharp::Project.Shared.UI.Configuration.UIPanelPrefabConfigRepository
+  _configs:
+    _serializedList:
+    - Key: Assets.Project.Features.Scenes.Game.GamePausePanel
+      Value:
+        _id: Assets.Project.Features.Scenes.Game.GamePausePanel
+        _prefabReference:
+          m_AssetGUID: 7e9eedf78bf24ec4a7f10703d2457be1
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        _viewScript: {fileID: 11500000, guid: 905f96794ad046b699b6519958a43fd0, type: 3}
+    - Key: Assets.Project.Features.Scenes.Game.GameExitConfirmPanel
+      Value:
+        _id: Assets.Project.Features.Scenes.Game.GameExitConfirmPanel
+        _prefabReference:
+          m_AssetGUID: 4d9e93a0b83b4f6f9ca1b2d75b6cf4a1
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        _viewScript: {fileID: 11500000, guid: b6f8c4a1e9d04cf2a6d8c39f1b5e72ac, type: 3}

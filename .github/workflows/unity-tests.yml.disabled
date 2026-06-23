@@ -1,0 +1,71 @@
+# Unity test runner — EditMode + PlayMode.
+#
+# This workflow is part of the GDF Starter Kit template and is copied into every
+# project created from it. Because GitHub does NOT copy repository secrets into
+# template-derived repos, each new project must configure Unity licensing secrets
+# before this workflow can pass:
+#
+#   Settings -> Secrets and variables -> Actions -> New repository secret
+#     UNITY_LICENSE   — contents of your Unity .ulf license file (personal license)
+#     UNITY_EMAIL     — Unity account email      (only needed for Pro/Plus activation)
+#     UNITY_PASSWORD  — Unity account password   (only needed for Pro/Plus activation)
+#
+# See https://game.ci/docs/github/activation for how to obtain UNITY_LICENSE.
+# Until these secrets exist, the test job will fail at the activation step — that is
+# expected for a freshly cloned template, not a workflow bug.
+
+name: Unity Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: unity-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: ${{ matrix.testMode }} tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        testMode: [editmode, playmode]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ matrix.testMode }}-${{ hashFiles('Packages/manifest.json', 'Packages/packages-lock.json') }}
+          restore-keys: |
+            Library-${{ matrix.testMode }}-
+            Library-
+
+      - name: Run ${{ matrix.testMode }} tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          testMode: ${{ matrix.testMode }}
+          # Run only the project's own test assemblies, not package tests.
+          customParameters: -assemblyNames Project.Tests.EditMode;Project.Tests.PlayMode
+          artifactsPath: ${{ matrix.testMode }}-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.testMode }}-results
+          path: ${{ matrix.testMode }}-results
