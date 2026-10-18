@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Assets.Project.Core.Bootstrap.Warmup;
 using Assets.Project.Core.Infrastructure.SceneLoading;
 using Assets.Project.Core.Infrastructure.SceneLoading.Configuration;
 using Assets.Project.Features.Scenes.Game;
@@ -22,6 +23,7 @@ namespace Assets.Project.Core.Bootstrap
         private readonly SceneConfigRepository _sceneConfigRepository;
         private readonly IUIAssetProvider _uiAssetProvider;
         private readonly ISceneLoaderService _sceneLoaderService;
+        private readonly StartupWarmupService _startupWarmupService;
         private int _transitionInProgress;
 
         /// <summary>
@@ -30,21 +32,27 @@ namespace Assets.Project.Core.Bootstrap
         /// <param name="sceneConfigRepository">Project-specific scene config repository.</param>
         /// <param name="uiAssetProvider">UI prefab provider used to warm up transition screens.</param>
         /// <param name="sceneLoaderService">Scene loading service used for bootstrap transitions.</param>
+        /// <param name="startupWarmupService">Startup warmup service that runs in parallel with the initial scene load.</param>
         public GameRunnerService(
             SceneConfigRepository sceneConfigRepository,
             IUIAssetProvider uiAssetProvider,
-            ISceneLoaderService sceneLoaderService)
+            ISceneLoaderService sceneLoaderService,
+            StartupWarmupService startupWarmupService)
         {
             _sceneConfigRepository = sceneConfigRepository;
             _uiAssetProvider = uiAssetProvider;
             _sceneLoaderService = sceneLoaderService;
+            _startupWarmupService = startupWarmupService ?? throw new ArgumentNullException(nameof(startupWarmupService));
         }
 
         /// <summary>
-        /// Runs the initial bootstrap sequence.
+        /// Runs the initial bootstrap sequence. Startup warmup is kicked off fire-and-forget
+        /// so background initialization overlaps the first scene transition; consumers that
+        /// need warmup completion wait on <see cref="IStartupWarmupAwaiter"/>.
         /// </summary>
         public async UniTask RunAsync()
         {
+            _startupWarmupService.RunAsync().Forget();
             await TransitionToSceneAsync(ESceneType.Home);
         }
 

@@ -3,7 +3,7 @@
     "unityMCP": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["--offline", "--from", "mcpforunityserver==9.6.8", "mcp-for-unity", "--transport", "stdio"]
+      "args": ["--from", "mcpforunityserver==9.7.3", "mcp-for-unity", "--transport", "stdio"]
     },
     "serena": {
       "type": "stdio",

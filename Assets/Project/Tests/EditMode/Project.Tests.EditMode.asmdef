@@ -5,7 +5,12 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "Project",
-        "GDF.ConfigRepository"
+        "VContainer",
+        "UniTask",
+        "GDF.LocalDataStorage",
+        "GDF.Audio",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

@@ -6,6 +6,7 @@
         "UniTask",
         "R3.Unity",
         "Unity.Addressables",
+        "Unity.ResourceManager",
         "Unity.TextMeshPro",
         "UnityEngine.UI",
         "GDF.AddressableAssetLoader",
@@ -15,7 +16,8 @@
         "GDF.LocalDataStorage",
         "GDF.LocalDataStorage.Installers.VContainer",
         "GDF.SceneLoader",
-        "GDF.SceneLoader.Installers.VContainer"
+        "GDF.SceneLoader.Installers.VContainer",
+        "Unity.Localization"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

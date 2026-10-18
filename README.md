@@ -29,12 +29,15 @@ place — drop in your gameplay features and ship.
 - `com.cysharp.r3` — reactive streams (used by presenters).
 - `com.github-glitchenzo.nugetforunity` — NuGet integration.
 - `com.coplaydev.unity-mcp` — Unity MCP server for AI assistants (Claude Code, Codex, JetBrains AI, Cursor).
+- `com.unity.localization` — primary localization framework (strings, assets, system-locale selection via `SystemLocaleSelector`).
+- `com.unity.pipeline` — Unity CLI pipeline for scripted recompile and test runs from the shell.
+- `com.coffee.ui-particle` — Particle Effect for UGUI (particle systems rendered through the UI canvas).
 - Unity registry: Addressables, Input System, TextMesh Pro, Universal Render Pipeline, Test Framework, AI suite.
 
 ### Imported assets
 
 - **DOTween** (Demigiant) — tween library.
-- **Lean Localization** (CW) — localization framework.
+- **Lean Localization** (CW) — legacy localization framework kept for compatibility; new work should prefer `com.unity.localization`.
 - **IngameDebugConsole** — in-game debug console.
 - **NaughtyAttributes** — inspector authoring attributes.
 - **SerializeInterfaces** & **SerializedCollections** (AYellowpaper) — inspector-serialized interfaces and dictionaries.
@@ -173,6 +176,8 @@ Typical first-day workflow for a new feature:
 5. **Configs:** model game data as `Config<TKey>` types and store them in a `ConfigRepository<TKey, TConfig>` ScriptableObject asset.
 6. **Save data:** derive from `LocalData` and use `ILocalDataStorage.Save<T>` / `TryLoad<T>` for persistence.
 7. **Audio:** inject `ISfxService` / `IMusicService` / `IAudioSettingsService`; build cues from your own catalog. See the [com.gdf.audio README](https://github.com/AlexPyriel/Audio).
+8. **Tutorial:** build steps as `TutorialStepAsset` subclasses, drop them into a `TutorialDefinition` list, assign the `TutorialInstaller` asset to the `RootLifetimeScope` field. The runner follows active scenes through `IActiveSceneScopeHolder`; each per-game step composes `Highlight` / `SpawnPanel` / `WaitForAction` from `TutorialStepAsset`. Fill the empty `ETutorialHighlightKey` and `ETutorialActionType` enums with per-game values; `TutorialAnalyticsTracker` emits `tutorial:step:<index>_<name>` and `tutorial:complete` through `IAnalyticsService` (bound to `NullAnalyticsService` by default — swap in a vendor implementation to receive events).
+9. **Localization:** open **Edit → Project Settings → Localization → Create** to generate `LocalizationSettings.asset`, then **Window → Asset Management → Localization Tables** to author string tables. The default locale selector is `SystemLocaleSelector` — the game boots in the player's system locale, falling back to the project's default locale. Store table collections under `Assets/Project/Localization/`.
 
 ---
 

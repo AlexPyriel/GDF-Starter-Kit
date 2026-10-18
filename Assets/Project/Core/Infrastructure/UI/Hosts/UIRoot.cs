@@ -17,6 +17,7 @@ namespace Assets.Project.Core.Infrastructure.UI.Hosts
         private Canvas _canvas;
         private IOverlayUIService _overlayUIService;
         private readonly Vector3[] _focusCorners = new Vector3[4];
+        private bool _hasTutorialPanels;
 
         [SerializeField] private RectTransform _screenRoot;
         [SerializeField] private RectTransform _panelRoot;
@@ -104,13 +105,34 @@ namespace Assets.Project.Core.Infrastructure.UI.Hosts
             }
         }
 
+        /// <summary>
+        /// Signals whether the tutorial feature currently has visible panels under <see cref="TutorialRoot"/>.
+        /// While <paramref name="hasTutorialPanels"/> is <see langword="true"/> the tutorial root stays
+        /// active regardless of overlay alpha or focus frame — the tutorial overlay owns dim state
+        /// independently from the overlay-UI service.
+        /// </summary>
+        /// <param name="hasTutorialPanels">Whether active panels exist in the tutorial layer.</param>
+        public void SetTutorialPanelsVisible(bool hasTutorialPanels)
+        {
+            _hasTutorialPanels = hasTutorialPanels;
+            RefreshTutorialRootActive();
+        }
+
         private void HandleOverlayAlphaRequested(float alpha)
         {
-            _tutorialRoot.gameObject.SetActive(alpha > 0f || _focusFrame.gameObject.activeSelf);
-
             Color color = _tutorialDimmer.color;
             color.a = Mathf.Clamp01(alpha);
             _tutorialDimmer.color = color;
+
+            RefreshTutorialRootActive();
+        }
+
+        private void RefreshTutorialRootActive()
+        {
+            bool shouldBeActive = _hasTutorialPanels
+                || _tutorialDimmer.color.a > 0f
+                || _focusFrame.gameObject.activeSelf;
+            _tutorialRoot.gameObject.SetActive(shouldBeActive);
         }
 
         private void HandleTutorialFocusRequested(RectTransform target)
@@ -130,9 +152,7 @@ namespace Assets.Project.Core.Infrastructure.UI.Hosts
         private void HandleTutorialFocusCleared()
         {
             _focusFrame.gameObject.SetActive(false);
-
-            if (_tutorialDimmer.color.a <= 0f)
-                _tutorialRoot.gameObject.SetActive(false);
+            RefreshTutorialRootActive();
         }
 
         private void ValidateSerializedReferences()

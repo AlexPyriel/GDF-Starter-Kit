@@ -19,6 +19,15 @@
 - Запускать только безопасные локальные проверки; при отсутствии Unity Editor искать `error CS` (исключая `Library/obj`); тяжёлые Unity-операции — только по запросу.
 - После правок — кратко перечислить, что изменено и где.
 
+### Грилл-ми и развилки — сначала ГДД (when GDD exists)
+
+**Правило применимо, если в проекте существует `design/gdd/` с документами.** SK сам по себе ГДД не имеет; правило срабатывает, когда клон добавит свою игровую документацию.
+
+- **Перед каждым grill-me, каждым вопросом через `AskUserQuestion` и каждой развилкой** сначала проштудировать релевантные разделы ГДД (`design/gdd/`, при необходимости весь ГДД + `design/registry/`, `data/`), и только потом формулировать варианты.
+- Каждый вариант ответа помечать соответствием ГДД: что́ — **буква ГДД** (с явной ссылкой на файл/раздел/§), что́ — **отклонение/компромисс**, что́ — **отложенная логика**. Из формулировки должно быть видно, какой вариант каноничен, а какой — уступка.
+- Если ГДД по вопросу молчит или противоречив — прямо это указать (не выдавать догадку за канон) и предложить зафиксировать решение как новое.
+- Применять к **каждому** гриллу и развилке без отдельного напоминания.
+
 ### Инструменты и MCP
 
 - В начале сессии проверять список активных MCP-серверов.
@@ -27,6 +36,24 @@
 - MCP-серверы запускать только когда нужны для текущей задачи; не перезапускать/останавливать между мелкими шагами; завершать, если больше не нужны и не управляются клиентом; о старте/стопе сообщать.
 - Для Unity Editor (сцены, GameObject, компоненты, AssetDatabase, Console, play mode) — UnityMCP; если недоступен — попросить открыть проект и убедиться, что `MCP for Unity` активен. Не использовать UnityMCP там, где хватает локального анализа файлов.
 - После создания/изменения скриптов через `manage_script` или `create_script` обязательно проверить компиляцию через `read_console` до использования новых типов.
+
+### Компиляция и тесты — Unity CLI + Pipeline
+
+Компиляция и прогон тестов — через `unity command` (пакет `com.unity.pipeline`), не через UnityMCP.
+
+**Предусловие:** установлен `unity` CLI (`unity --version`) и пакет `com.unity.pipeline` в проекте. Если CLI не установлен — работать через UnityMCP по прежнему циклу и сообщить пользователю, что регламент не применим до установки.
+
+Цикл:
+1. Правка исходников — Read/Edit/Grep.
+2. `unity status` — инстанс должен быть `ready`.
+3. `unity command recompile` → поллинг `unity command recompile_status` до `"status":"completed"`.
+4. `unity command run_tests --mode editor --filter <TestClass>`.
+
+- Ответ `No Unity Editor instances found` во время domain reload — ретраить через 3 с, минимум 2 попытки, прежде чем считать редактор недоступным.
+- Успех команды не считать применённым изменением: компиляцию подтверждать существованием типа через `unity command eval`, тесты — счётчиком Passed/Failed.
+- Safe Mode в `unity pipeline list` — чинить ошибки компиляции в исходниках и перезапускать редактор.
+- Пока Unity открыт — не редактировать `.prefab`/`.unity`/`.asset` текстом.
+- Pipeline не отвечает после двух ретраев — переключаться на `mcp__unityMCP__*` и сообщать об этом явно.
 
 ### Стиль кода C#
 
@@ -42,6 +69,16 @@
 - Не переименовывать папки/ассеты Unity без причины (ломает `.meta`); сохранять структуру `Assets/`; при создании/перемещении следить за `.meta`.
 - Не создавать дубликаты проекта или временные копии вида `*-copy`, `*-backup`, `*-tmp`.
 - Учитывать сериализацию (`[SerializeField]`, совместимость с инспектором); имя файла `MonoBehaviour`/`ScriptableObject` = имя класса; проверять `.asmdef` и обновлять при новых зависимостях; `SerializedDictionary` для inspector-словарей.
+
+### UI — развилка по технологии
+
+SK использует **UGUI** как default-технологию runtime UI; **UI Toolkit** — только для editor-тулинга (`EditorWindow`, custom Inspector).
+
+- **UGUI** (`Canvas`, `RectTransform`, `CanvasScaler`, `TextMeshProUGUI`) — Unity CLI Pipeline: `create_gameobject` + `add_component` + `set_component_properties`. UnityMCP (`manage_gameobject`, `manage_components`) — резерв, если pipeline недоступен.
+- **UI Toolkit** (`.uxml`, `.uss`, `UIDocument`, `PanelSettings`) — только `mcp__unityMCP__manage_ui`. Команд UI Toolkit в pipeline нет. Применяется только для editor-инструментов.
+- `AddComponent(Canvas)` даёт `m_RenderMode = World Space` и не создаёт EventSystem — выставлять `"Screen Space - Overlay"` явно.
+- Имена свойств — сериализованные (`m_RenderMode`, не `renderMode`), enum-значения — display-строки с пробелами (`"Screen Space - Overlay"`).
+- Скриншот UGUI — `unity command capture_game_view`. Для Overlay обязателен Play Mode: `editor_play` → `capture_game_view --source screen` → `editor_stop`.
 
 ### Git и подтверждения
 
@@ -114,4 +151,4 @@
 
 @.claude/docs/context-management.md
 
-> Примечание: правила из раздела `Claude Code specific overrides` имеют приоритет над общими CCGS-инструкциями там, где они конкретизируют поведение под этот Unity-проект (формат ссылок, стиль кода C# и `.editorconfig`, `1 сущность — 1 файл`, использование Serena/UnityMCP, Unity-гигиена, дисциплина изменений, Working Protocol).
+> Примечание: правила из раздела `Claude Code specific overrides` имеют приоритет над общими CCGS-инструкциями там, где они конкретизируют поведение под этот Unity-проект (формат ссылок, стиль кода C# и `.editorconfig`, `1 сущность — 1 файл`, использование Serena/UnityMCP, Unity CLI + Pipeline цикл для compile/test, UI-dispatch (UGUI runtime, UI Toolkit editor-only), grill-me/GDD-discipline when `design/gdd/` exists, Unity-гигиена, дисциплина изменений, Working Protocol).
