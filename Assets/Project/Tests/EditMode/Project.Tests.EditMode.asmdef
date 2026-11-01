@@ -9,6 +9,7 @@
         "UniTask",
         "GDF.LocalDataStorage",
         "GDF.Audio",
+        "GDF.Analytics",
         "UnityEngine.UI",
         "Unity.TextMeshPro"
     ],

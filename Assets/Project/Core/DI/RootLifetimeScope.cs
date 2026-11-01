@@ -1,18 +1,22 @@
+using System;
+using Ads.Installers.VContainer;
+using Analytics.Installers.VContainer;
 using Audio.Installers.VContainer;
-using LocalDataStorage.Installers.VContainer;
 using Assets.Project.Core.Bootstrap;
 using Assets.Project.Core.Bootstrap.Warmup;
 using Assets.Project.Core.Bootstrap.Warmup.Steps;
 using Assets.Project.Core.DI.EntryPoints;
-using Assets.Project.Core.Infrastructure.Analytics;
 using Assets.Project.Core.Infrastructure.SceneLoading.Installers;
-using System;
 using Assets.Project.Core.Infrastructure.UI.Hosts;
 using Assets.Project.Core.Infrastructure.UI.Interfaces;
 using Assets.Project.Core.Infrastructure.UI.Providers;
 using Assets.Project.Core.Infrastructure.UI.Services;
 using Assets.Project.Features.Tutorial.Framework.Installers;
+using Currency.Config;
+using Currency.Installers.VContainer;
+using LocalDataStorage.Installers.VContainer;
 using SceneLoader.Installers.VContainer;
+using TimerService.Installers.VContainer;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -20,7 +24,10 @@ using VContainer.Unity;
 namespace Assets.Project.Core.DI
 {
     /// <summary>
-    /// Корневой LifetimeScope проекта. Используется как composition root приложения.
+    /// Composition root for the starter kit. Registers every GDF package service through its DI
+    /// installer, wires the UI host prefab, warmup pipeline, scene loader, tutorial system and the
+    /// bootstrap entry point. All GDF packages are hooked up on default settings — a cloned game
+    /// can override anything through the serialized fields or by editing this file.
     /// </summary>
     public sealed class RootLifetimeScope : LifetimeScope
     {
@@ -34,20 +41,42 @@ namespace Assets.Project.Core.DI
         [Tooltip("Tutorial installer asset. Optional: assign to enable the tutorial system; leave empty to omit it.")]
         private TutorialInstaller _tutorialInstaller;
 
-        /// <summary>
-        /// Регистрирует глобальные зависимости приложения в корневом контейнере.
-        /// </summary>
-        /// <param name="builder">Построитель контейнера для регистрации зависимостей.</param>
+        [SerializeField]
+        [Tooltip("Currency repository asset. Optional: leave empty for a prototype without currencies — the Currency service stays registered as a safe no-op surface.")]
+        private CurrencyRepository _currencyRepository;
+
+        /// <summary>Registers global application dependencies.</summary>
+        /// <param name="builder">Container builder used for every GDF package installer.</param>
         protected override void Configure(IContainerBuilder builder)
         {
             if (_globalOverlayRootPrefab == null)
                 throw new InvalidOperationException($"{nameof(RootLifetimeScope)} requires {nameof(_globalOverlayRootPrefab)} to be assigned.");
 
             _sceneLoadingInstaller.Install(builder);
-            new LocalDataStorageVContainerInstaller().Install(builder);
+
+            // Local data storage uses the crash-safe file backend by default (atomic writes + .bak)
+            // so clones get Steam Cloud / Google Play / iCloud compatibility without extra wiring.
+            new LocalDataStorageVContainerInstaller()
+                .WithFileBackend()
+                .Install(builder);
+
             new SceneLoaderVContainerInstaller().Install(builder);
             new AudioVContainerInstaller().Install(builder);
-            builder.Register<IAnalyticsService, NullAnalyticsService>(Lifetime.Singleton);
+
+            // Default binding writes every analytics event to the console. Swap in a vendor backend
+            // (GameAnalytics, Firebase, mixpanel) by chaining .WithBackend(...) above Install().
+            new AnalyticsVContainerInstaller().Install(builder);
+
+            new TimerServiceVContainerInstaller().Install(builder);
+
+            // Currency is registered with a repository asset or omitted entirely in a non-F2P prototype.
+            if (_currencyRepository != null)
+                new CurrencyVContainerInstaller(_currencyRepository).Install(builder);
+
+            // Ads facade with no vendor adapters — placeholder calls return Failed / false until a clone
+            // plugs in AppLovin / UnityAds / IronSource adapters through this installer's fluent API.
+            new AdsVContainerInstaller().Install(builder);
+
             builder.Register<AddressableUIViewLoaderService>(Lifetime.Singleton);
             builder.Register(CreateGlobalOverlayRoot, Lifetime.Singleton);
             builder.Register<IUIAssetProvider, AddressableUIAssetProvider>(Lifetime.Singleton);

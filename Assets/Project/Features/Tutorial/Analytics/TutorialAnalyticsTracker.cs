@@ -1,5 +1,5 @@
 using System;
-using Assets.Project.Core.Infrastructure.Analytics;
+using Analytics;
 using Assets.Project.Features.Tutorial.Framework.Interfaces;
 using Assets.Project.Features.Tutorial.Framework.Services;
 using VContainer.Unity;
@@ -10,9 +10,9 @@ namespace Assets.Project.Features.Tutorial.Analytics
     /// Tutorial steps -> analytics funnel: each working-entry start emits
     /// <c>tutorial:step:&lt;NN&gt;_&lt;step name&gt;</c>, run completion emits <c>tutorial:complete</c>.
     /// Subscribes to <see cref="TutorialStepRunner"/> events (the runner is a root-scope singleton,
-    /// so the tracker also lives there) and reports through <see cref="IAnalyticsService"/>. The
-    /// starter kit's default binding is <see cref="NullAnalyticsService"/> — swap it with your
-    /// vendor's implementation to receive the events.
+    /// so the tracker also lives there) and reports through <see cref="IAnalyticsService"/> from the
+    /// <c>com.gdf.analytics</c> package. The starter kit's default binding is
+    /// <see cref="DebugAnalyticsBackend"/> — swap for a vendor adapter to receive the events.
     /// </summary>
     public sealed class TutorialAnalyticsTracker : IInitializable, IDisposable
     {
@@ -63,12 +63,12 @@ namespace Assets.Project.Features.Tutorial.Analytics
         private void OnStepStarted(int stepIndex, ITutorialStep step)
         {
             string name = StepName(step) ?? "unknown";
-            _analytics.TrackDesign($"{EVENT_PREFIX_STEP}{stepIndex:00}_{name}");
+            _analytics.TrackInfo($"{EVENT_PREFIX_STEP}{stepIndex:00}_{name}");
         }
 
         private void OnCompleted()
         {
-            _analytics.TrackDesign(EVENT_COMPLETED);
+            _analytics.TrackInfo(EVENT_COMPLETED);
         }
     }
 }

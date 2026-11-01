@@ -19,8 +19,14 @@ place — drop in your gameplay features and ship.
 | `com.gdf.scene-loader` | [SceneLoader](https://github.com/AlexPyriel/SceneLoader) | Addressables-backed scene loading with exclusive single-scene transitions, parallel additive loads, and explicit `LoadResult`. |
 | `com.gdf.addressable-asset-loader` | [AddressableAssetLoader](https://github.com/AlexPyriel/AddressableAssetLoader) | Generic typed loader wrapper around Unity Addressables. |
 | `com.gdf.config-repository` | [ConfigRepository](https://github.com/AlexPyriel/ConfigRepository) | ScriptableObject-backed key→config repositories with identity synchronization and provider contracts. |
-| `com.gdf.local-data-storage` | [LocalDataStorage](https://github.com/AlexPyriel/LocalDataStorage) | Typed local persistence for serializable save payloads. |
+| `com.gdf.config-import` | [ConfigImport](https://github.com/AlexPyriel/ConfigImport) | Editor-time Google Sheets / local CSV import pipeline that writes into any `ConfigRepository` through the `IConfigImportTarget` bridge. |
+| `com.gdf.local-data-storage` | [LocalDataStorage](https://github.com/AlexPyriel/LocalDataStorage) | Typed local persistence with pluggable backends (PlayerPrefs / crash-safe atomic file), slots, schema migrations, change events, sync + async APIs. |
 | `com.gdf.audio` | [Audio](https://github.com/AlexPyriel/Audio) | Cue-driven audio service — SFX pooling, music crossfade, per-bus persisted settings. |
+| `com.gdf.analytics` | [Analytics](https://github.com/AlexPyriel/Analytics) | Vendor-agnostic analytics facade (Info / Error / Progression / PurchaseRevenue / AdsRevenue) with composite backend dispatch and a Debug backend default. |
+| `com.gdf.timer-service` | [TimerService](https://github.com/AlexPyriel/TimerService) | Named countdown timers with offline progression and auto-save. Dailies, cooldowns, stamina systems. |
+| `com.gdf.currency` | [Currency](https://github.com/AlexPyriel/Currency) | Multi-currency wallet (Get / Set / Add / Spend / Reset) with earned-total tracking. Empty by default; assign a `CurrencyRepository` asset when a game needs it. |
+| `com.gdf.ads` | [Ads](https://github.com/AlexPyriel/Ads) | Vendor-agnostic ad orchestration (banner / interstitial / rewarded) with daily caps and IAP-driven remove-ads. Vendor SDKs plug in through adapter interfaces. |
+| `com.gdf.localization-sheets` | [LocalizationSheets](https://github.com/AlexPyriel/LocalizationSheets) | Bridge that pulls public Google Sheets (zero OAuth) through `com.gdf.config-import` and writes into Unity Localization `StringTableCollection`s. |
 
 ### Third-party UPM packages
 
@@ -37,7 +43,6 @@ place — drop in your gameplay features and ship.
 ### Imported assets
 
 - **DOTween** (Demigiant) — tween library.
-- **Lean Localization** (CW) — legacy localization framework kept for compatibility; new work should prefer `com.unity.localization`.
 - **IngameDebugConsole** — in-game debug console.
 - **NaughtyAttributes** — inspector authoring attributes.
 - **SerializeInterfaces** & **SerializedCollections** (AYellowpaper) — inspector-serialized interfaces and dictionaries.
@@ -174,10 +179,15 @@ Typical first-day workflow for a new feature:
 3. **Screen view:** create a `ScreenView`-derived prefab. Register it in `UIScreenPrefabConfigRepository.asset` with the `Sync Keys` button.
 4. **Presenter:** derive from `Presenter<TView>`, inject services through the constructor.
 5. **Configs:** model game data as `Config<TKey>` types and store them in a `ConfigRepository<TKey, TConfig>` ScriptableObject asset.
-6. **Save data:** derive from `LocalData` and use `ILocalDataStorage.Save<T>` / `TryLoad<T>` for persistence.
-7. **Audio:** inject `ISfxService` / `IMusicService` / `IAudioSettingsService`; build cues from your own catalog. See the [com.gdf.audio README](https://github.com/AlexPyriel/Audio).
-8. **Tutorial:** build steps as `TutorialStepAsset` subclasses, drop them into a `TutorialDefinition` list, assign the `TutorialInstaller` asset to the `RootLifetimeScope` field. The runner follows active scenes through `IActiveSceneScopeHolder`; each per-game step composes `Highlight` / `SpawnPanel` / `WaitForAction` from `TutorialStepAsset`. Fill the empty `ETutorialHighlightKey` and `ETutorialActionType` enums with per-game values; `TutorialAnalyticsTracker` emits `tutorial:step:<index>_<name>` and `tutorial:complete` through `IAnalyticsService` (bound to `NullAnalyticsService` by default — swap in a vendor implementation to receive events).
-9. **Localization:** open **Edit → Project Settings → Localization → Create** to generate `LocalizationSettings.asset`, then **Window → Asset Management → Localization Tables** to author string tables. The default locale selector is `SystemLocaleSelector` — the game boots in the player's system locale, falling back to the project's default locale. Store table collections under `Assets/Project/Localization/`.
+6. **Save data:** derive from `LocalData` and use `ILocalDataStorage.Save<T>` / `TryLoad<T>` for persistence. The kit's default binding writes crash-safe files under `Application.persistentDataPath/saves/` (atomic `tmp -> move + .bak`). Add `[DataVersion(N)]` + `[MigrationFor(…)]` migrations as the schema evolves.
+7. **Audio:** inject `ISfxService` / `IMusicService` / `IAudioSettingsService`; build cues from your own catalog.
+8. **Analytics:** inject `IAnalyticsService` and call `TrackInfo` / `TrackProgression` / `TrackPurchaseRevenue` / `TrackAdsRevenue`. The default binding is `DebugAnalyticsBackend` — swap `AnalyticsVContainerInstaller().WithBackend(vendor)` in `RootLifetimeScope` to add GameAnalytics / Firebase / mixpanel vendor adapters.
+9. **Timers:** inject `ITimerService` and call `CreateOrReset("daily_reward", 86400)`. The service applies the offline delta on `Initialize` so timers finish while the game is closed.
+10. **Currency:** author a `CurrencyRepository` asset (`Create -> GDF -> Currency -> Currency Repository`), assign it to the `_currencyRepository` field on `RootLifetimeScope`. Inject `ICurrencyService` and call `Add` / `Spend` / `GetEarnedTotal`.
+11. **Ads:** implement `IAdsInitializer` / `IAdsBanner` / `IAdsInterstitial` / `IAdsRewarded` once per vendor (AppLovin / UnityAds / IronSource / AdMob) and chain `AdsVContainerInstaller().WithRewarded(…)` in `RootLifetimeScope`. The facade enforces per-placement daily caps and the IAP remove-ads flag.
+12. **Tutorial:** build steps as `TutorialStepAsset` subclasses, drop them into a `TutorialDefinition` list, assign the `TutorialInstaller` asset to the `RootLifetimeScope` field. The runner follows active scenes through `IActiveSceneScopeHolder`; each per-game step composes `Highlight` / `SpawnPanel` / `WaitForAction` from `TutorialStepAsset`. Fill the empty `ETutorialHighlightKey` and `ETutorialActionType` enums with per-game values; `TutorialAnalyticsTracker` emits `tutorial:step:<index>_<name>` and `tutorial:complete` through `IAnalyticsService`.
+13. **Localization:** open **Edit → Project Settings → Localization → Create** to generate `LocalizationSettings.asset`, then **Window → Asset Management → Localization Tables** to author a `StringTableCollection`. For designers who prefer Google Sheets, author a `LocalizationSheetsImporter` asset — paste a **public** sheet URL into `GoogleSheetsDataSource`, map `(LocaleCode -> SheetName)` entries, click **Reload**. The default locale selector is `SystemLocaleSelector` — the game boots in the player's system locale with the project's default locale as fallback.
+14. **Config import (balance / loot / shops):** author a `ConfigImporter` asset — paste a **public** Google Sheets URL, point `Target` at any `ConfigRepository<TKey, TConfig>`, click **Reload**. Supports `Color`, `Sprite`, `AssetReference`, `List<T>` through plug-in `ConfigValueConverter` SOs. OAuth2 data source available for private spreadsheets.
 
 ---
 

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using Analytics;
 using Assets.Project.Features.Tutorial.Analytics;
 using Assets.Project.Features.Tutorial.Framework.Interfaces;
 using Assets.Project.Features.Tutorial.Framework.Services;
@@ -16,9 +17,8 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Analytics
 {
     /// <summary>
     /// Exercises <see cref="TutorialAnalyticsTracker"/>: each working-entry start and run completion
-    /// are reported through <see cref="Core.Infrastructure.Analytics.IAnalyticsService"/> as design
-    /// events with the step index and name; asset-step name comes from the asset name; after Dispose
-    /// no runner events reach analytics.
+    /// are reported through <see cref="IAnalyticsService"/> as design events with the step index and
+    /// name; asset-step name comes from the asset name; after Dispose no runner events reach analytics.
     /// </summary>
     public sealed class TutorialAnalyticsTrackerTests
     {
@@ -56,7 +56,7 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Analytics
             // Assert: a non-asset step is named by its type.
             CollectionAssert.AreEqual(
                 new[] { "tutorial:step:00_FakeStep", "tutorial:step:01_FakeStep", "tutorial:complete" },
-                _analytics.Design);
+                _analytics.Info);
         });
 
         [UnityTest]
@@ -72,7 +72,7 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Analytics
             await runner.RunAsync(ID, Entries(new FakeStep(_log, "a")), CancellationToken.None);
 
             // Assert
-            CollectionAssert.IsEmpty(_analytics.Design);
+            CollectionAssert.IsEmpty(_analytics.Info);
         });
 
         [Test]

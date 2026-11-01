@@ -2,6 +2,74 @@
 
 All notable changes to GDF Starter Kit.
 
+## [1.2.0] — 2026-11-02
+
+Prototype-to-playtest acceleration. Four new GDF packages wired into the composition
+root by default, two existing packages upgraded, Lean Localization retired, Google
+Sheets authoring path for both balance data and localization.
+
+### New GDF packages (added as default dependencies)
+
+- **`com.gdf.analytics` v1.0.0** — vendor-agnostic analytics facade with composite backend
+  dispatch. Replaces the thin in-SK `IAnalyticsService` / `NullAnalyticsService` pair.
+  Default binding = `DebugAnalyticsBackend` (logs to console). Swap through
+  `AnalyticsVContainerInstaller().WithBackend(...)` to plug GameAnalytics / Firebase.
+- **`com.gdf.timer-service` v1.0.0** — named countdown timers with offline progression
+  and auto-save. Default autosave 60 s. Backed by `com.gdf.local-data-storage`.
+- **`com.gdf.currency` v1.0.0** — multi-currency wallet with earned-total tracking.
+  Empty by default — assign a `CurrencyRepository` asset to `RootLifetimeScope._currencyRepository`
+  to enable. Backed by `com.gdf.config-repository` + `com.gdf.local-data-storage`.
+- **`com.gdf.ads` v1.0.0** — vendor-agnostic ad orchestration: banner, interstitial,
+  rewarded video, per-placement daily caps, IAP-driven remove-ads flag. Facade without
+  vendor SDKs — clones plug AppLovin / UnityAds / IronSource / AdMob adapters.
+- **`com.gdf.config-import` v1.0.0** — editor-time Google Sheets / CSV importer that
+  writes into any `ConfigRepository<TKey, TConfig>` through the new `IConfigImportTarget`
+  bridge. Public spreadsheets through `gviz/csv` (no OAuth), OAuth2 for private, local
+  `TextAsset` data source for fixtures. Pluggable `ConfigValueConverter` SOs for Color,
+  Sprite, AssetReference, List types.
+- **`com.gdf.localization-sheets` v1.0.0** — bridge that pulls public Google Sheets
+  (zero OAuth) via `com.gdf.config-import` and writes them into Unity Localization
+  `StringTableCollection`s. Custom backends plug through `ILocalizationBackend`.
+
+### Updated GDF packages
+
+- **`com.gdf.local-data-storage` v1.0.0 → v2.0.0** — pluggable backends (PlayerPrefs
+  kept for compatibility, new crash-safe `FileStorageBackend` with atomic
+  `tmp -> move + .bak` writes and WebGL IDBFS auto-flush); schema migrations
+  (`[DataVersion(N)]` + `[MigrationFor(...)]`); slot overloads; async API via UniTask;
+  change events (`DataSaved`, `DataDeleted`, `AllDeleted`); R3 adapter in a separate
+  assembly. Backward-compatible with v1 PlayerPrefs saves.
+- **`com.gdf.audio` v1.0.0 → v1.1.0** — depends on `com.gdf.local-data-storage@v2.0.0`;
+  no public API change.
+- **`com.gdf.config-repository` v1.0.0 → v1.1.0** — new `IConfigImportTarget` non-generic
+  bridge (explicit implementation on `ConfigRepository<TKey, TConfig>`) so external
+  importers can write into any repository without reflecting on its generic arguments.
+- **`com.gdf.addressable-asset-loader` v1.0.0 → v1.0.1** — package metadata cleanup
+  (`LICENSE.md`, `Assembly Definition Notes` section, removed stale empty folders).
+
+### Changed in SK
+
+- `RootLifetimeScope` installs every GDF package through its DI installer by default:
+  `LocalDataStorageVContainerInstaller.WithFileBackend()`, `AnalyticsVContainerInstaller`,
+  `TimerServiceVContainerInstaller`, `AdsVContainerInstaller`, optional
+  `CurrencyVContainerInstaller(_currencyRepository)`. Save data lives in files out of the box.
+- `TutorialAnalyticsTracker` now talks to the external `IAnalyticsService` from
+  `com.gdf.analytics` through `TrackInfo` (replaces the removed in-SK `TrackDesign`).
+
+### Removed
+
+- `Assets/Project/Core/Infrastructure/Analytics/` — in-SK thin `IAnalyticsService` /
+  `NullAnalyticsService` / `EAnalyticsProgressionStatus`. Replaced by `com.gdf.analytics`.
+- `Assets/Plugins/CW/LeanLocalization/` + `Assets/Plugins/CW/LeanCommon/` — Lean Localization
+  removed. New work uses Unity Localization (optionally fed by `com.gdf.localization-sheets`).
+
+### Verification
+
+- Compile verification is **not** run in this release — SK's Unity Editor instance was not
+  reachable from the Unity CLI pipeline during cut. Open the project in Unity and let the
+  package manager resolve all GDF git dependencies; the test suite from v1.1.0 is still in
+  place and should pass as before.
+
 ## [1.1.0] — 2026-10-18
 
 Platform-agnostic enrichment harvested from `narrative_poker`: production-tested
