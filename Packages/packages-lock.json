@@ -53,96 +53,41 @@
       "hash": "25f1aaee557447d4ef69cecde7045be3698dbfa8"
     },
     "com.gdf.ads": {
-      "version": "https://github.com/AlexPyriel/Ads.git#v1.0.0",
+      "version": "https://github.com/AlexPyriel/Ads.git#v1.0.1",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.gdf.local-data-storage": "https://github.com/AlexPyriel/LocalDataStorage.git#v2.0.0",
         "com.cysharp.unitask": "2.5.0"
       },
-      "hash": "2af0ab62e81f49f27e9b746dc09fbf7f3227486f"
+      "hash": "1d44bba3c5a82eb2f7c96d0b51a1cbaa0c83f2fe"
     },
     "com.gdf.analytics": {
-      "version": "https://github.com/AlexPyriel/Analytics.git#v1.0.0",
+      "version": "https://github.com/AlexPyriel/Analytics.git#v1.0.1",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1f799e090dab4a4a49f2e49d372f89913670280a"
-    },
-    "com.gdf.audio": {
-      "version": "https://github.com/AlexPyriel/Audio.git#v1.1.0",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.gdf.local-data-storage": "https://github.com/AlexPyriel/LocalDataStorage.git#v2.0.0"
-      },
-      "hash": "2004a51ef3bdb753d522d6f734853ca5df431a47"
-    },
-    "com.gdf.config-import": {
-      "version": "https://github.com/AlexPyriel/ConfigImport.git#v1.0.0",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.gdf.config-repository": "https://github.com/AlexPyriel/ConfigRepository.git#v1.1.0",
-        "com.gdf.addressable-asset-loader": "https://github.com/AlexPyriel/AddressableAssetLoader.git#v1.0.0"
-      },
-      "hash": "73fed502a487e7a7364bb25b180a7dceb0d57fef"
-    },
-    "com.gdf.config-repository": {
-      "version": "https://github.com/AlexPyriel/ConfigRepository.git#v1.1.0",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "15df57be56fb2a759170807787382c796a2d594f"
-    },
-    "com.gdf.currency": {
-      "version": "https://github.com/AlexPyriel/Currency.git#v1.0.0",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.gdf.config-repository": "https://github.com/AlexPyriel/ConfigRepository.git#v1.1.0",
-        "com.gdf.local-data-storage": "https://github.com/AlexPyriel/LocalDataStorage.git#v2.0.0"
-      },
-      "hash": "59febb7dbeeb1fddd1e55071e5c12979191c6308"
-    },
-    "com.gdf.local-data-storage": {
-      "version": "https://github.com/AlexPyriel/LocalDataStorage.git#v2.0.0",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.cysharp.unitask": "2.5.0",
-        "com.unity.nuget.newtonsoft-json": "3.2.2"
-      },
-      "hash": "c3b9d07ee226f170408981d29e2083a5a8c049ac"
+      "hash": "91af8bcd5b2a5c0140933637b29ec6c6730cd822"
     },
     "com.gdf.localization-sheets": {
-      "version": "https://github.com/AlexPyriel/LocalizationSheets.git#v1.0.0",
+      "version": "https://github.com/AlexPyriel/LocalizationSheets.git#v1.0.1",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.gdf.config-import": "https://github.com/AlexPyriel/ConfigImport.git#v1.0.0",
         "com.unity.localization": "1.5.5"
       },
-      "hash": "c5ef8eeed4bbdd383638ac2fa8a59351c4786ca8"
-    },
-    "com.gdf.scene-loader": {
-      "version": "https://github.com/AlexPyriel/SceneLoader.git#v1.0.0",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.unity.addressables": "2.8.1"
-      },
-      "hash": "96f9ea33d7ebab25512d2b0705714b199619f6df"
+      "hash": "33206dc0186c94e3c8651d04837c9a2728501b0a"
     },
     "com.gdf.timer-service": {
-      "version": "https://github.com/AlexPyriel/TimerService.git#v1.0.0",
+      "version": "https://github.com/AlexPyriel/TimerService.git#v1.0.1",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.gdf.local-data-storage": "https://github.com/AlexPyriel/LocalDataStorage.git#v2.0.0",
         "com.cysharp.unitask": "2.5.0"
       },
-      "hash": "9489a6cb73d5a94cf2d45388cf12d2e06b32206b"
+      "hash": "40a5ccabaf91015f980f929c1a5e00bd35e0ef71"
     },
     "com.github-glitchenzo.nugetforunity": {
       "version": "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
@@ -530,13 +475,6 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
-    },
-    "jp.hadashikick.vcontainer": {
-      "version": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer#1.17.0",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "177dbda557fd652ce7f5d1647a3621653e094373"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

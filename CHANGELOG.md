@@ -2,6 +2,17 @@
 
 All notable changes to GDF Starter Kit.
 
+## [1.2.3] — 2026-11-02
+
+### Changed
+
+- Manifest pins for 5 new GDF packages bumped `v1.0.0 → v1.0.1`: `com.gdf.analytics`, `com.gdf.ads`, `com.gdf.currency`, `com.gdf.timer-service`, `com.gdf.localization-sheets`. v1.0.1 is a clean release of the GDF.* namespace rename + `using VContainer.Unity;` installer fix, replacing the force-moved v1.0.0 tag.
+
+### Added
+
+- `.claude/skills/unity-cli` and `.claude/skills/new-unity-project` — Unity CLI agent skills installed project-locally via `unity skill install claude-code --local`. Available to Claude Code immediately after cloning the kit, no user-side install required.
+- README `AI-agent setup` section documents how to refresh the full Unity-authored skill catalog (33 skills) with `unity skill install claude-code --local`.
+
 ## [1.2.2] — 2026-11-02
 
 ### Changed

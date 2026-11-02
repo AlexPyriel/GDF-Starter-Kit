@@ -155,6 +155,24 @@ Assets/
 
 - **Unity 6.x (6000.0+)** with Universal Render Pipeline.
 - macOS / Windows / Linux Editor.
+- Unity CLI (`unity --version`) + `com.unity.pipeline` package — pinned by this kit; AI agents drive compile and tests through it.
+
+---
+
+## AI-agent setup (optional)
+
+The kit ships with project-level AI-agent configuration under `.claude/` for Claude Code:
+
+- `.claude/docs/` + `.aiassistant/rules/` — coding/package/UI/architecture rules.
+- `.claude/skills/` — CCGS game-studio skill set + the Unity CLI agent skill (`unity-cli`) + `new-unity-project`. Project-level skills are available to Claude Code immediately after cloning without any user-side install.
+
+To refresh the full Unity-authored skill catalog from Unity's registry (33 skills: `ui-ugui`, `ui-uitk`, `optimize-text-mesh-pro`, `shader-graph-create-custom-node`, `migrate-birp-to-urp`, `levelplay-unity-integration`, `implement-in-app-purchases`, etc.), run from the project root:
+
+```bash
+unity skill install claude-code --local
+```
+
+Install is additive and idempotent: it skips skills that already exist and never overwrites user-scope versions. Repeat when offline resolution fails or when a new Unity skill ships.
 
 ---
 
