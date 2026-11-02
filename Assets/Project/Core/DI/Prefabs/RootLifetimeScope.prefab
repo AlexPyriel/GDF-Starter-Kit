@@ -51,3 +51,4 @@ MonoBehaviour:
   _sceneLoadingInstaller: {fileID: 11400000, guid: fe0e1441d4d37425f9947559c10d6929, type: 2}
   _globalOverlayRootPrefab: {fileID: 1005, guid: 3579e6e53f4e4fed8a9bffb8e640153d, type: 3}
   _tutorialInstaller: {fileID: 0}
+  _currencyRepository: {fileID: 0}
