@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Analytics;
+using GDF.Analytics;
 
 namespace Assets.Project.Tests.EditMode.Tutorial.Analytics
 {

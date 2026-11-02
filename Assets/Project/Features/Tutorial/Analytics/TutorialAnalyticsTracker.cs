@@ -1,5 +1,5 @@
 using System;
-using Analytics;
+using GDF.Analytics;
 using Assets.Project.Features.Tutorial.Framework.Interfaces;
 using Assets.Project.Features.Tutorial.Framework.Services;
 using VContainer.Unity;

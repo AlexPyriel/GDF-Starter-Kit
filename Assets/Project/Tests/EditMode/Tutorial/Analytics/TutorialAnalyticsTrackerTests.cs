@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using Analytics;
+using GDF.Analytics;
 using Assets.Project.Features.Tutorial.Analytics;
 using Assets.Project.Features.Tutorial.Framework.Interfaces;
 using Assets.Project.Features.Tutorial.Framework.Services;

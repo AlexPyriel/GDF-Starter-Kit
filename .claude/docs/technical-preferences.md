@@ -38,7 +38,7 @@
 - **Signals/Events**: R3 (`Observable`/`Subject`) for reactive streams
 - **Files**: one entity per file, file name = type name
 - **Scenes/Prefabs**: PascalCase
-- **Namespaces**: `Assets.Project.*` mirroring folder path (e.g. `Assets.Project.Core.Infrastructure.UI`)
+- **Namespaces**: `Assets.Project.*` mirroring folder path (e.g. `Assets.Project.Core.Infrastructure.UI`); GDF-пакеты — `GDF.<PackageName>` (новые), устоявшиеся `Audio`/`LocalDataStorage`/`SceneLoader`/`ConfigRepository`/`AddressableAssetLoader` остаются без префикса. GDF.* обязателен для имён, которые могут столкнуться с `UnityEngine.*` (`Analytics`, `Ads`, `Monetization`)
 
 ## Performance Budgets
 

@@ -2,6 +2,18 @@
 
 All notable changes to GDF Starter Kit.
 
+## [1.2.1] — 2026-11-02
+
+### Fixed
+
+- New GDF packages (`com.gdf.analytics`, `com.gdf.ads`, `com.gdf.currency`, `com.gdf.timer-service`, `com.gdf.localization-sheets`) now use `GDF.*` root namespace to avoid conflicts with Unity built-in `UnityEngine.Analytics` / `UnityEngine.Monetization`.
+- VContainer installers in those packages add missing `using VContainer.Unity;` so `IInstaller` resolves.
+- `com.gdf.addressable-asset-loader` bumped to v1.0.2 (adds `LICENSE.md.meta`, removes Unity import warning).
+
+### Changed
+
+- `.aiassistant/rules/package-formation.md`, `CLAUDE.md`, `.claude/docs/technical-preferences.md` updated with new package authoring rules: GDF.* namespace discipline, VContainer installer gotcha, `defineConstraints` + `versionDefines` pattern for optional DI installers, `set_active_instance` for multi-instance UnityMCP, LICENSE.md meta requirement, force-move tag protocol.
+
 ## [1.2.0] — 2026-11-02
 
 Prototype-to-playtest acceleration. Four new GDF packages wired into the composition

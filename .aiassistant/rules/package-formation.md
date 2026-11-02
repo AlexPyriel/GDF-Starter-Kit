@@ -6,6 +6,50 @@ apply: always
 
 Use this rule when preparing a Unity package structure for future extraction, git installation, or publication.
 
+## Namespaces (критично)
+
+- **Корневой namespace нового пакета — всегда `GDF.<PackageName>`** (`GDF.Analytics`, `GDF.Currency`, `GDF.Ads`, `GDF.TimerService`, `GDF.LocalizationSheets`).
+  - Префикс `GDF.*` защищает от конфликтов с built-in `UnityEngine.*` ветками (`UnityEngine.Analytics`, `UnityEngine.Advertisements`, `UnityEngine.Monetization` и т.п.): без префикса `using Analytics;` в коде-консьюмере резолвится в `UnityEngine.Analytics` и все символы пакета исчезают.
+  - Устаревшие пакеты (`Audio`, `LocalDataStorage`, `SceneLoader`, `ConfigRepository`, `AddressableAssetLoader`) остаются с короткими namespace по историческим причинам; переименовывать только по отдельному запросу.
+- **Installer sub-namespace: `GDF.<Package>.Installers.<Container>`** (напр. `GDF.Analytics.Installers.VContainer`). Короткий финальный сегмент, совпадающий с именем DI-пакета, допустим — Unity это терпит благодаря отдельным `.ref.dll`.
+- **Asmdef `name` = полный namespace** (`GDF.Analytics`, `GDF.Analytics.Installers.VContainer`); имя файла asmdef совпадает с полем `name`.
+
+## Installer-asmdef для опциональных DI (критично)
+
+Инсталляторы (VContainer/Zenject/Reflex) **должны компилироваться только когда DI-пакет действительно установлен**, иначе консьюмер без этого DI падает с CS0246. Паттерн:
+
+```json
+{
+  "name": "GDF.Analytics.Installers.VContainer",
+  "references": [ "GDF.Analytics", "VContainer" ],
+  "autoReferenced": true,
+  "defineConstraints": [ "ANALYTICS_VCONTAINER" ],
+  "versionDefines": [
+    { "name": "jp.hadashikick.vcontainer", "expression": "", "define": "ANALYTICS_VCONTAINER" }
+  ]
+}
+```
+
+- `defineConstraints` указывает: ассембли компилируется только когда define установлен.
+- `versionDefines` устанавливает define при наличии нужного UPM-пакета (`jp.hadashikick.vcontainer` для VContainer, `com.svermeulen.extenject` для Zenject, `com.gustavopsantos.reflex` для Reflex).
+- Define должен быть **уникален для каждого пакета+DI** (`ANALYTICS_VCONTAINER`, `CURRENCY_ZENJECT`, …), иначе коллизии между пакетами.
+
+## VContainer: IInstaller живёт в `VContainer.Unity`
+
+- `IInstaller` объявлен в `VContainer.Unity`, не в `VContainer`. В VContainer-инсталлере **обязательно обе using-директивы**:
+
+```csharp
+using VContainer;
+using VContainer.Unity;
+
+namespace GDF.<Package>.Installers.VContainer
+{
+    public sealed class <Name>VContainerInstaller : IInstaller { ... }
+}
+```
+
+Без `using VContainer.Unity;` получаешь `CS0246: 'IInstaller' could not be found` — классическая ловушка. Проверить место типа можно через `mcp__unityMCP__unity_reflect(action="search", query="IInstaller", scope="packages")` (scope `unity` ничего не вернёт — тип в стороннем UPM-пакете).
+
 ## Source of truth
 
 - Follow the standard Unity UPM package layout as the baseline.
@@ -87,6 +131,26 @@ Use this rule when preparing a Unity package structure for future extraction, gi
 - Preserve `.meta` files when moving or creating package assets.
 - Do not delete package metas unless the corresponding file or folder is intentionally removed.
 - When introducing new package folders such as `Runtime/`, `Tests/`, or `Tests/EditMode/`, make sure their folder `.meta` files are created and committed as well.
+- **Все `.md`-файлы в корне пакета (LICENSE.md, README.md, CHANGELOG.md) требуют `.meta`**, иначе Unity при импорте UPM-пакета пишет warning `"Asset ... has no meta file, but it's in an immutable folder. The asset will be ignored."`. Шаблон:
+  ```yaml
+  fileFormatVersion: 2
+  guid: <32 hex chars, unique>
+  DefaultImporter:
+    externalObjects: {}
+    userData:
+    assetBundleName:
+    assetBundleVariant:
+  ```
+  GUID генерировать `uuidgen | tr -d '-' | tr A-Z a-z`.
+
+## Публикация и force-move тэгов (критично)
+
+- При исправлении бага в уже опубликованном `v1.0.0` **разрешено force-move тэга**, если версию ещё никто внешний не закрепил:
+  1. `git commit` в main
+  2. `git tag -f v1.0.0`
+  3. `git push origin main --force-with-lease` + `git push origin v1.0.0 --force`
+  4. У консьюмера (SK) удалить `Library/PackageCache` и `Packages/packages-lock.json`, перезапустить Unity — Package Manager подтянет свежий коммит под тем же тэгом.
+- Если тэг могут держать внешние проекты — выпускать патч-версию (`v1.0.1`), а не force-move.
 
 ## Versioning
 
