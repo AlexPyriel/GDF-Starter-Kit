@@ -44,13 +44,13 @@
       "hash": "a77a1b4a89824fb6df293099de3060daf2a432c1"
     },
     "com.gdf.addressable-asset-loader": {
-      "version": "https://github.com/AlexPyriel/AddressableAssetLoader.git#v1.0.1",
+      "version": "https://github.com/AlexPyriel/AddressableAssetLoader.git#v1.0.2",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.addressables": "2.8.1"
       },
-      "hash": "7c3e93b7dcba8af79477e5f1f451bc351a516498"
+      "hash": "25f1aaee557447d4ef69cecde7045be3698dbfa8"
     },
     "com.gdf.ads": {
       "version": "https://github.com/AlexPyriel/Ads.git#v1.0.0",
@@ -385,7 +385,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.pipeline": {
-      "version": "0.5.0-exp.1",
+      "version": "0.9.1-exp.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {

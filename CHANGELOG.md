@@ -2,6 +2,13 @@
 
 All notable changes to GDF Starter Kit.
 
+## [1.2.2] — 2026-11-02
+
+### Changed
+
+- `com.unity.pipeline` bumped `0.5.0-exp.1` → `0.9.1-exp.1`.
+- CLAUDE.md: добавлена заметка, что цикл Unity CLI + Pipeline не зависит от фокуса Editor — вызовы `unity command` можно безопасно отдавать субагенту.
+
 ## [1.2.1] — 2026-11-02
 
 ### Fixed
