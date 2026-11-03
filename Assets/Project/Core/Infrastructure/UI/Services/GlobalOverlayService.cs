@@ -35,13 +35,6 @@ namespace Assets.Project.Core.Infrastructure.UI.Services
             _uiRoot.Initialize(this);
         }
 
-        /// <inheritdoc />
-        public event Action<RectTransform> TutorialFocusRequested;
-        /// <inheritdoc />
-        public event Action TutorialFocusCleared;
-        /// <inheritdoc />
-        public event Action<float> OverlayAlphaRequested;
-
         /// <summary>
         /// Gets the active global panel stack ordered from bottom to top.
         /// </summary>
@@ -107,21 +100,6 @@ namespace Assets.Project.Core.Infrastructure.UI.Services
                 IUIPanel panel = _panelStack[i];
                 ReleasePanel(panel, panel.GetType());
             }
-        }
-
-        internal void FocusTarget(RectTransform target)
-        {
-            TutorialFocusRequested?.Invoke(target);
-        }
-
-        internal void ClearFocusTarget()
-        {
-            TutorialFocusCleared?.Invoke();
-        }
-
-        internal void SetOverlayAlpha(float alpha)
-        {
-            OverlayAlphaRequested?.Invoke(Mathf.Clamp01(alpha));
         }
 
         private async UniTask<TPanel> GetOrCreatePanelAsync<TPanel>(TPanel prefab, bool show = true)

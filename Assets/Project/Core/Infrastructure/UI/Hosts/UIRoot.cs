@@ -14,10 +14,7 @@ namespace Assets.Project.Core.Infrastructure.UI.Hosts
     [RequireComponent(typeof(RectTransform))]
     public sealed class UIRoot : MonoBehaviour
     {
-        private Canvas _canvas;
         private IOverlayUIService _overlayUIService;
-        private readonly Vector3[] _focusCorners = new Vector3[4];
-        private bool _hasTutorialPanels;
 
         [SerializeField] private RectTransform _screenRoot;
         [SerializeField] private RectTransform _panelRoot;
@@ -25,9 +22,6 @@ namespace Assets.Project.Core.Infrastructure.UI.Hosts
         [SerializeField] private RectTransform _tutorialRoot;
         [SerializeField] private Image _backdrop;
         [SerializeField] private Button _backdropButton;
-        [SerializeField] private Image _tutorialDimmer;
-        [SerializeField] private Image _focusFrame;
-        [SerializeField] private Outline _focusFrameOutline;
 
         /// <summary>
         /// Gets the transform that hosts active scene screens.
@@ -45,47 +39,22 @@ namespace Assets.Project.Core.Infrastructure.UI.Hosts
         public RectTransform OverlayRoot => _overlayRoot;
 
         /// <summary>
-        /// Gets the transform that hosts tutorial dimming and focus visuals.
+        /// Gets the transform that hosts the tutorial overlay.
         /// </summary>
         public RectTransform TutorialRoot => _tutorialRoot;
 
         private void Awake()
         {
             ValidateSerializedReferences();
-            _canvas = GetComponent<Canvas>();
-        }
-
-        private void OnDestroy()
-        {
-            if (_overlayUIService == null)
-                return;
-
-            _overlayUIService.OverlayAlphaRequested -= HandleOverlayAlphaRequested;
-            _overlayUIService.TutorialFocusRequested -= HandleTutorialFocusRequested;
-            _overlayUIService.TutorialFocusCleared -= HandleTutorialFocusCleared;
         }
 
         /// <summary>
-        /// Binds the UI host to an overlay-capable service that drives backdrop and tutorial visuals.
+        /// Binds the UI host to the overlay-capable service that owns panel dismissal.
         /// </summary>
-        /// <param name="overlayUIService">The overlay service that owns panel dismissal and focus state.</param>
+        /// <param name="overlayUIService">The overlay service that dismisses the top panel on backdrop clicks.</param>
         public void Initialize(IOverlayUIService overlayUIService)
         {
-            if (_overlayUIService != null)
-            {
-                _overlayUIService.OverlayAlphaRequested -= HandleOverlayAlphaRequested;
-                _overlayUIService.TutorialFocusRequested -= HandleTutorialFocusRequested;
-                _overlayUIService.TutorialFocusCleared -= HandleTutorialFocusCleared;
-            }
-
             _overlayUIService = overlayUIService;
-
-            if (_overlayUIService == null)
-                return;
-
-            _overlayUIService.OverlayAlphaRequested += HandleOverlayAlphaRequested;
-            _overlayUIService.TutorialFocusRequested += HandleTutorialFocusRequested;
-            _overlayUIService.TutorialFocusCleared += HandleTutorialFocusCleared;
         }
 
         /// <summary>
@@ -107,52 +76,12 @@ namespace Assets.Project.Core.Infrastructure.UI.Hosts
 
         /// <summary>
         /// Signals whether the tutorial feature currently has visible panels under <see cref="TutorialRoot"/>.
-        /// While <paramref name="hasTutorialPanels"/> is <see langword="true"/> the tutorial root stays
-        /// active regardless of overlay alpha or focus frame — the tutorial overlay owns dim state
-        /// independently from the overlay-UI service.
+        /// The tutorial root is active only while <paramref name="hasTutorialPanels"/> is <see langword="true"/>.
         /// </summary>
         /// <param name="hasTutorialPanels">Whether active panels exist in the tutorial layer.</param>
         public void SetTutorialPanelsVisible(bool hasTutorialPanels)
         {
-            _hasTutorialPanels = hasTutorialPanels;
-            RefreshTutorialRootActive();
-        }
-
-        private void HandleOverlayAlphaRequested(float alpha)
-        {
-            Color color = _tutorialDimmer.color;
-            color.a = Mathf.Clamp01(alpha);
-            _tutorialDimmer.color = color;
-
-            RefreshTutorialRootActive();
-        }
-
-        private void RefreshTutorialRootActive()
-        {
-            bool shouldBeActive = _hasTutorialPanels
-                || _tutorialDimmer.color.a > 0f
-                || _focusFrame.gameObject.activeSelf;
-            _tutorialRoot.gameObject.SetActive(shouldBeActive);
-        }
-
-        private void HandleTutorialFocusRequested(RectTransform target)
-        {
-            if (target == null)
-            {
-                HandleTutorialFocusCleared();
-                return;
-            }
-
-            _tutorialRoot.gameObject.SetActive(true);
-            _focusFrame.gameObject.SetActive(true);
-            MatchRectTransform(_focusFrame.rectTransform, target, _tutorialRoot, _canvas);
-            _focusFrame.transform.SetAsLastSibling();
-        }
-
-        private void HandleTutorialFocusCleared()
-        {
-            _focusFrame.gameObject.SetActive(false);
-            RefreshTutorialRootActive();
+            _tutorialRoot.gameObject.SetActive(hasTutorialPanels);
         }
 
         private void ValidateSerializedReferences()
@@ -175,19 +104,9 @@ namespace Assets.Project.Core.Infrastructure.UI.Hosts
             if (_backdropButton == null)
                 throw new MissingReferenceException($"{nameof(UIRoot)} requires {nameof(_backdropButton)} to be assigned.");
 
-            if (_tutorialDimmer == null)
-                throw new MissingReferenceException($"{nameof(UIRoot)} requires {nameof(_tutorialDimmer)} to be assigned.");
-
-            if (_focusFrame == null)
-                throw new MissingReferenceException($"{nameof(UIRoot)} requires {nameof(_focusFrame)} to be assigned.");
-
-            if (_focusFrameOutline == null)
-                throw new MissingReferenceException($"{nameof(UIRoot)} requires {nameof(_focusFrameOutline)} to be assigned.");
-
             _backdropButton.onClick.AddListener(OnBackdropClicked);
             _backdrop.gameObject.SetActive(false);
             _backdrop.transform.SetAsFirstSibling();
-            _focusFrame.gameObject.SetActive(false);
             _panelRoot.SetAsLastSibling();
             _overlayRoot.SetAsLastSibling();
             _tutorialRoot.SetAsLastSibling();
@@ -197,27 +116,6 @@ namespace Assets.Project.Core.Infrastructure.UI.Hosts
         private void OnBackdropClicked()
         {
             _overlayUIService?.DismissTopPanelAsync().Forget();
-        }
-
-        private void MatchRectTransform(RectTransform destination, RectTransform source, RectTransform parent, Canvas canvas)
-        {
-            source.GetWorldCorners(_focusCorners);
-
-            Camera eventCamera = null;
-            if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
-                eventCamera = canvas.worldCamera;
-
-            Vector2 min = RectTransformUtility.WorldToScreenPoint(eventCamera, _focusCorners[0]);
-            Vector2 max = RectTransformUtility.WorldToScreenPoint(eventCamera, _focusCorners[2]);
-
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, min, eventCamera, out Vector2 localMin);
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, max, eventCamera, out Vector2 localMax);
-
-            destination.anchorMin = destination.anchorMax = new Vector2(0.5f, 0.5f);
-            destination.pivot = new Vector2(0.5f, 0.5f);
-            destination.anchoredPosition = (localMin + localMax) * 0.5f;
-            destination.sizeDelta = new Vector2(Mathf.Abs(localMax.x - localMin.x), Mathf.Abs(localMax.y - localMin.y));
-            destination.localScale = Vector3.one;
         }
     }
 }
