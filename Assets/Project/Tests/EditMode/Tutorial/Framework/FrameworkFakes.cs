@@ -241,55 +241,6 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
         }
     }
 
-    /// <summary>In-memory action bus: publish increments the counter, WaitForAction waits until the target is reached.</summary>
-    internal sealed class FakeActionBus : ITutorialActionBus
-    {
-        private readonly Dictionary<ETutorialActionType, int> _counters = new();
-        private event Action<ETutorialActionType, int> ActionPublished;
-
-        public void ResetCounters() => _counters.Clear();
-
-        public int GetCount(ETutorialActionType actionType)
-        {
-            return _counters.TryGetValue(actionType, out int value) ? value : 0;
-        }
-
-        public void Publish(ETutorialActionType actionType)
-        {
-            int updated = GetCount(actionType) + 1;
-            _counters[actionType] = updated;
-            ActionPublished?.Invoke(actionType, updated);
-        }
-
-        public async UniTask WaitForCount(ETutorialActionType actionType, int targetCount, CancellationToken token)
-        {
-            if (GetCount(actionType) >= targetCount)
-            {
-                return;
-            }
-
-            UniTaskCompletionSource tcs = new();
-
-            void Handler(ETutorialActionType type, int count)
-            {
-                if (type == actionType && count >= targetCount)
-                {
-                    tcs.TrySetResult();
-                }
-            }
-
-            ActionPublished += Handler;
-            try
-            {
-                await tcs.Task.AttachExternalCancellation(token);
-            }
-            finally
-            {
-                ActionPublished -= Handler;
-            }
-        }
-    }
-
     /// <summary>In-memory highlight registry: key -> targets.</summary>
     internal sealed class FakeHighlightRegistry : ITutorialHighlightRegistry
     {

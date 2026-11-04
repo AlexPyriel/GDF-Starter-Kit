@@ -24,8 +24,6 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
         private readonly TutorialStepRunner _runner;
         private readonly ITutorialProgressService _progress;
         private readonly IActiveSceneScopeHolder _sceneScopeHolder;
-        private readonly ITutorialActionBus _actionBus;
-        private readonly TutorialRunState _runState;
 
         private CancellationTokenSource _loopCts;
 
@@ -34,23 +32,17 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
         /// <param name="runner">Step runner.</param>
         /// <param name="progress">Progress: completion flag and cursor.</param>
         /// <param name="sceneScopeHolder">Active-scene change signal (auto-start).</param>
-        /// <param name="actionBus">Action bus — counters are reset at run start.</param>
-        /// <param name="runState">Run state — the flag read by the action bus.</param>
         /// <exception cref="ArgumentNullException">Any dependency is <see langword="null"/>.</exception>
         public TutorialService(
             ITutorialDefinition definition,
             TutorialStepRunner runner,
             ITutorialProgressService progress,
-            IActiveSceneScopeHolder sceneScopeHolder,
-            ITutorialActionBus actionBus,
-            TutorialRunState runState)
+            IActiveSceneScopeHolder sceneScopeHolder)
         {
             _definition = definition ?? throw new ArgumentNullException(nameof(definition));
             _runner = runner ?? throw new ArgumentNullException(nameof(runner));
             _progress = progress ?? throw new ArgumentNullException(nameof(progress));
             _sceneScopeHolder = sceneScopeHolder ?? throw new ArgumentNullException(nameof(sceneScopeHolder));
-            _actionBus = actionBus ?? throw new ArgumentNullException(nameof(actionBus));
-            _runState = runState ?? throw new ArgumentNullException(nameof(runState));
         }
 
         /// <summary>
@@ -98,8 +90,6 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
                 return;
             }
 
-            _actionBus.ResetCounters();
-            _runState.SetInProgress(true);
             _loopCts = new CancellationTokenSource();
             RunGuarded(_loopCts).Forget();
         }
@@ -165,7 +155,6 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
                 if (ReferenceEquals(_loopCts, cts))
                 {
                     _loopCts = null;
-                    _runState.SetInProgress(false);
                 }
 
                 cts.Dispose();
@@ -183,7 +172,6 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
             // Null BEFORE Cancel: IsRunning turns false immediately -> Restart/TryStart are correct;
             // RunGuarded.finally will see the mismatch and not touch the already-cancelled CTS again.
             _loopCts = null;
-            _runState.SetInProgress(false);
             cts.Cancel();
         }
     }

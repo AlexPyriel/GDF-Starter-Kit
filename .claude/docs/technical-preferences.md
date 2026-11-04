@@ -62,13 +62,16 @@
 - Hand-rolled DI / service locators — use VContainer
 - Direct `Resources.Load` for runtime UI/content — use Addressables via `AddressableAssetLoader`
 - Alternative tween/async libs (LeanTween, iTween, raw coroutines for timing) — use DOTween + UniTask
-- Other DI/reactive frameworks (Zenject, UniRx) — use VContainer + R3
+- Other DI/reactive frameworks (Zenject, UniRx) — use VContainer + R3 (+ MessagePipe for cross-feature domain events)
+- Hand-rolled event buses — use MessagePipe (`IPublisher<T>` / `ISubscriber<T>`); see ADR-0001 for R3 vs `event Action` vs MessagePipe
+- MessagePipe inside GDF packages — packages expose `event Action`; bridges to messages live in the consumer
 
 ## Allowed Libraries / Addons
 
 <!-- Add approved third-party dependencies here -->
 - **DI**: VContainer (`jp.hadashikick.vcontainer` 1.17)
 - **Async / Reactive**: UniTask (`com.cysharp.unitask`), R3 (`com.cysharp.r3` — reactive streams)
+- **Messaging**: MessagePipe (`com.cysharp.messagepipe` + `com.cysharp.messagepipe.vcontainer` 1.8.2) — cross-feature domain events, registered once in `RootLifetimeScope`
 - **Tweening / animation**: DOTween (Demigiant, `Assets/Plugins/Demigiant/DOTween`), Timeline (`com.unity.timeline`)
 - **Assets / loading**: Unity Addressables (`com.unity.addressables` 2.9) + `com.gdf.addressable-asset-loader`
 - **GDF infrastructure packages**: `com.gdf.scene-loader`, `com.gdf.config-repository`, `com.gdf.local-data-storage`, `com.gdf.audio`
@@ -84,7 +87,7 @@
 ## Architecture Decisions Log
 
 <!-- Quick reference linking to full ADRs in docs/architecture/ -->
-- [No ADRs yet — use /architecture-decision to create one]
+- [ADR-0001: Event channels — R3, `event Action`, MessagePipe](../../docs/architecture/adr-0001-messaging.md)
 
 ## Engine Specialists
 

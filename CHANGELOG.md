@@ -2,6 +2,29 @@
 
 All notable changes to GDF Starter Kit.
 
+## [1.3.0] — 2026-11-04
+
+MessagePipe for cross-feature domain events; the tutorial waits on typed messages.
+
+### Added
+
+- `com.cysharp.messagepipe` and `com.cysharp.messagepipe.vcontainer` 1.8.2. `RootLifetimeScope` calls `builder.RegisterMessagePipe()`; any message type resolves through VContainer open generics without registration.
+- Tutorial: `ITutorialMessageWaiter` / `TutorialMessageWaiter`; `TutorialStepAsset.WaitFor<TMessage>(token, count)` and `WaitFor<TMessage>(predicate, token, count)`.
+- ADR-0001 (`docs/architecture/adr-0001-messaging.md`): when to use R3, `event Action` or MessagePipe, with a package-event bridge recipe.
+
+### Removed
+
+- Tutorial action bus: `ETutorialActionType`, `ITutorialActionBus`, `ITutorialActionPublisher`, `ITutorialActionTracker`, `TutorialActionBus`, `TutorialRunState`, `ITutorialStateProvider`.
+- Unused overlay focus channel: `IOverlayUIService.TutorialFocusRequested` / `TutorialFocusCleared` / `OverlayAlphaRequested`, the matching internal methods on `SceneUIService` / `GlobalOverlayService`, and the `TutorialDimmer` / `FocusFrame` objects and fields on `UIRoot` (dim and highlight are owned by `TutorialOverlayView`).
+
+### Breaking — migrating a clone
+
+1. Add both MessagePipe packages to `Packages/manifest.json`, the `MessagePipe` and `MessagePipe.VContainer` references to `Project.asmdef`, and `builder.RegisterMessagePipe();` to `RootLifetimeScope.Configure`.
+2. For each `ETutorialActionType` value, declare a `readonly struct` message in the publishing feature (e.g. `DemonFightStarted`).
+3. Replace `ITutorialActionPublisher` injection and `Publish(ETutorialActionType.X)` with `IPublisher<X>` and `Publish(new X())`.
+4. Replace `WaitForAction(ETutorialActionType.X, token, count)` with `WaitFor<X>(token, count)`. Counting now starts at the call instead of at the run start.
+5. Delete the removed tutorial types and update `TutorialContext` construction in tests (`ITutorialMessageWaiter` instead of the action tracker).
+
 ## [1.2.3] — 2026-11-02
 
 ### Changed

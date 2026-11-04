@@ -5,6 +5,8 @@
         "VContainer",
         "UniTask",
         "R3.Unity",
+        "MessagePipe",
+        "MessagePipe.VContainer",
         "Unity.Addressables",
         "Unity.ResourceManager",
         "Unity.TextMeshPro",

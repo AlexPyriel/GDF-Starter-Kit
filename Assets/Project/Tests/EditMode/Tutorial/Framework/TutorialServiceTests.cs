@@ -23,8 +23,6 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
         private IObjectResolver _resolver;
         private FakeProgress _progress;
         private FakeSceneScopeHolder _holder;
-        private FakeActionBus _actionBus;
-        private TutorialRunState _runState;
 
         [SetUp]
         public void SetUp()
@@ -33,8 +31,6 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
             _resolver = new ContainerBuilder().Build();
             _progress = new FakeProgress(_log);
             _holder = new FakeSceneScopeHolder(_log, _resolver);
-            _actionBus = new FakeActionBus();
-            _runState = new TutorialRunState();
         }
 
         [TearDown]
@@ -50,7 +46,7 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
 
         private TutorialService CreateService(ITutorialDefinition definition)
         {
-            return new TutorialService(definition, CreateRunner(), _progress, _holder, _actionBus, _runState);
+            return new TutorialService(definition, CreateRunner(), _progress, _holder);
         }
 
         private ITutorialDefinition MakeDefinition(bool skip, params ITutorialStep[] steps)
@@ -70,12 +66,10 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
             ITutorialDefinition definition = MakeDefinition(false);
             TutorialStepRunner runner = CreateRunner();
 
-            Assert.Throws<ArgumentNullException>(() => new TutorialService(null, runner, _progress, _holder, _actionBus, _runState));
-            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, null, _progress, _holder, _actionBus, _runState));
-            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, runner, null, _holder, _actionBus, _runState));
-            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, runner, _progress, null, _actionBus, _runState));
-            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, runner, _progress, _holder, null, _runState));
-            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, runner, _progress, _holder, _actionBus, null));
+            Assert.Throws<ArgumentNullException>(() => new TutorialService(null, runner, _progress, _holder));
+            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, null, _progress, _holder));
+            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, runner, null, _holder));
+            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, runner, _progress, null));
         }
 
         [Test]

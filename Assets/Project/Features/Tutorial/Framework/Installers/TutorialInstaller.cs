@@ -51,12 +51,9 @@ namespace Assets.Project.Features.Tutorial.Framework.Installers
             // Current must be ready BEFORE scenes load, otherwise group OnEnable misses registration.
             builder.RegisterEntryPoint<TutorialHighlightRegistry>().As<ITutorialHighlightRegistry>();
 
-            // Run state + action bus: game publishes, steps wait.
-            builder.Register<TutorialRunState>(Lifetime.Singleton).AsSelf().As<ITutorialStateProvider>();
-            builder.Register<TutorialActionBus>(Lifetime.Singleton)
-                .As<ITutorialActionBus>()
-                .As<ITutorialActionTracker>()
-                .As<ITutorialActionPublisher>();
+            // Message waiter: game code publishes domain messages via MessagePipe (registered by the
+            // root scope), steps wait for them.
+            builder.Register<TutorialMessageWaiter>(Lifetime.Singleton).As<ITutorialMessageWaiter>();
 
             // Overlay (prefab -> instance under the global TutorialRoot), context, runner, orchestrator.
             builder.RegisterInstance(_overlayPrefab);

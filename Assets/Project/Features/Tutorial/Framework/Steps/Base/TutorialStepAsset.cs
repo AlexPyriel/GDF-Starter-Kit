@@ -18,7 +18,7 @@ namespace Assets.Project.Features.Tutorial.Framework.Steps.Base
     /// not conflict. Backs the orchestration metadata via <c>[SerializeField]</c> (the "Orchestration"
     /// group) and reduces execution to <see cref="OnExecute"/>. Gives the subclass GRANULAR
     /// mechanisms — a step composes them itself: highlight (<see cref="Highlight"/>), its own panel
-    /// (<see cref="SpawnPanel{T}"/>), action waits (<see cref="WaitForAction"/>, <see cref="WaitForButtonClick"/>,
+    /// (<see cref="SpawnPanel{T}"/>), action waits (<see cref="WaitFor{TMessage}(CancellationToken, int)"/>,<see cref="WaitForButtonClick"/>,
     /// <see cref="WaitForEvent"/>).
     /// <para>
     /// The runner executes a clone (<see cref="CreateRuntimeInstance"/>), not the asset itself —
@@ -239,14 +239,35 @@ namespace Assets.Project.Features.Tutorial.Framework.Steps.Base
             return disposable;
         }
 
-        /// <summary>Waits for a game action (published to the bus by game code) — universal step completion.</summary>
-        /// <param name="actionType">Action type.</param>
+        /// <summary>
+        /// Waits for a domain message published by game code through MessagePipe (<c>IPublisher&lt;TMessage&gt;</c>) —
+        /// universal step completion. Only messages published after the call are counted.
+        /// </summary>
+        /// <typeparam name="TMessage">Domain message type declared by the game.</typeparam>
         /// <param name="token">Cancellation token.</param>
-        /// <param name="count">Required number of occurrences (default 1).</param>
-        /// <returns>Task that completes when the counter is reached.</returns>
-        protected UniTask WaitForAction(ETutorialActionType actionType, CancellationToken token, int count = 1)
+        /// <param name="count">Required number of messages (default 1).</param>
+        /// <returns>Task that completes when the required number of messages has been received.</returns>
+        protected UniTask WaitFor<TMessage>(CancellationToken token, int count = 1)
         {
-            return _context.Actions.WaitForCount(actionType, count, token);
+            return _context.Messages.WaitFor<TMessage>(count, null, token);
+        }
+
+        /// <summary>
+        /// Waits for domain messages that match <paramref name="predicate"/> (e.g. a tap on a specific card).
+        /// Only messages published after the call are counted.
+        /// </summary>
+        /// <typeparam name="TMessage">Domain message type declared by the game.</typeparam>
+        /// <param name="predicate">Filter for messages that count toward completion.</param>
+        /// <param name="token">Cancellation token.</param>
+        /// <param name="count">Required number of matching messages (default 1).</param>
+        /// <returns>Task that completes when the required number of matching messages has been received.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="predicate"/> is <see langword="null"/>.</exception>
+        protected UniTask WaitFor<TMessage>(Func<TMessage, bool> predicate, CancellationToken token, int count = 1)
+        {
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate));
+
+            return _context.Messages.WaitFor(count, predicate, token);
         }
 
         /// <summary>Waits for a click on the dim (outside cutouts) — "advance" for message steps.</summary>

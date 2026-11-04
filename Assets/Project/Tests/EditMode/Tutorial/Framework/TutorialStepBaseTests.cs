@@ -3,8 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using Assets.Project.Features.Tutorial.Framework.Enums;
+using Assets.Project.Features.Tutorial.Framework.Interfaces;
+using Assets.Project.Features.Tutorial.Framework.Services;
 using Assets.Project.Features.Tutorial.Framework.Steps.Base;
 using Cysharp.Threading.Tasks;
+using MessagePipe;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -15,14 +18,23 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
 {
     /// <summary>
     /// Exercises <see cref="TutorialStepAsset"/>: context injection, auto-Dispose (Track + spawned panels),
-    /// key-driven highlight, panel spawn, and the waits (action / advance click / button / event) with
-    /// cancellation and unsubscribe. Uses raw-cast enum values because the starter-kit enums ship empty
-    /// (per-game clones add real members).
+    /// key-driven highlight, panel spawn, and the waits (message / advance click / button / event) with
+    /// cancellation and unsubscribe. Message waits run on a real MessagePipe broker. Uses raw-cast enum
+    /// values because the starter-kit enums ship empty (per-game clones add real members).
     /// </summary>
     public sealed class TutorialStepBaseTests
     {
         private const ETutorialHighlightKey TEST_HIGHLIGHT_KEY = (ETutorialHighlightKey)1;
-        private const ETutorialActionType TEST_ACTION_TYPE = (ETutorialActionType)1;
+
+        private readonly struct TestMessage
+        {
+            public TestMessage(int id)
+            {
+                Id = id;
+            }
+
+            public int Id { get; }
+        }
 
         private sealed class ProbeStep : TutorialStepAsset
         {
@@ -35,7 +47,8 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
             public IDisposable TrackPublic(IDisposable disposable) => Track(disposable);
             public void HighlightPublic(ETutorialHighlightKey key) => Highlight(key);
             public T SpawnPanelPublic<T>(T prefab) where T : Component => SpawnPanel(prefab);
-            public UniTask WaitForActionPublic(ETutorialActionType a, CancellationToken t, int c = 1) => WaitForAction(a, t, c);
+            public UniTask WaitForMessagePublic(CancellationToken t, int c = 1) => WaitFor<TestMessage>(t, c);
+            public UniTask WaitForMessagePublic(Func<TestMessage, bool> p, CancellationToken t, int c = 1) => WaitFor(p, t, c);
             public UniTask WaitForAdvancePublic(CancellationToken t) => WaitForAdvanceClick(t);
             public UniTask WaitForButtonPublic(Button b, CancellationToken t) => WaitForButtonClick(b, t);
             public UniTask WaitForEventPublic(Action<Action> s, Action<Action> u, CancellationToken t) => WaitForEvent(s, u, t);
@@ -50,7 +63,7 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
 
         private List<string> _log;
         private FakeOverlay _overlay;
-        private FakeActionBus _actionBus;
+        private IPublisher<TestMessage> _publisher;
         private FakeHighlightRegistry _registry;
         private IObjectResolver _resolver;
         private List<ProbeStep> _probes;
@@ -60,14 +73,20 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
         {
             _log = new List<string>();
             _overlay = new FakeOverlay(_log);
-            _actionBus = new FakeActionBus();
             _registry = new FakeHighlightRegistry();
             _probes = new List<ProbeStep>();
-            TutorialContext context = new TutorialContext(_overlay, new FakeSceneWaiter(_log), new FakeProgress(_log), _registry, _actionBus);
 
             ContainerBuilder builder = new ContainerBuilder();
-            builder.RegisterInstance(context);
+            builder.RegisterMessagePipe();
+            builder.Register<TutorialMessageWaiter>(Lifetime.Singleton).As<ITutorialMessageWaiter>();
+            builder.Register(resolver => new TutorialContext(
+                _overlay,
+                new FakeSceneWaiter(_log),
+                new FakeProgress(_log),
+                _registry,
+                resolver.Resolve<ITutorialMessageWaiter>()), Lifetime.Singleton);
             _resolver = builder.Build();
+            _publisher = _resolver.Resolve<IPublisher<TestMessage>>();
         }
 
         [TearDown]
@@ -159,18 +178,42 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
         }
 
         [UnityTest]
-        public IEnumerator WaitForAction_CompletesWhenPublished() => UniTask.ToCoroutine(async () =>
+        public IEnumerator WaitFor_CompletesWhenMessagePublished() => UniTask.ToCoroutine(async () =>
         {
             ProbeStep probe = InjectedProbe();
 
-            UniTask task = probe.WaitForActionPublic(TEST_ACTION_TYPE, CancellationToken.None);
+            UniTask task = probe.WaitForMessagePublic(CancellationToken.None);
             Assert.AreEqual(UniTaskStatus.Pending, task.Status);
 
-            _actionBus.Publish(TEST_ACTION_TYPE);
+            _publisher.Publish(new TestMessage(1));
 
             await task;
             Assert.Pass();
         });
+
+        [Test]
+        public void WaitFor_Predicate_CountsOnlyMatchingMessages()
+        {
+            ProbeStep probe = InjectedProbe();
+
+            UniTask task = probe.WaitForMessagePublic(message => message.Id == 7, CancellationToken.None, 2);
+            _publisher.Publish(new TestMessage(7));
+            _publisher.Publish(new TestMessage(3));
+
+            Assert.AreEqual(UniTaskStatus.Pending, task.Status, "Non-matching message is not counted.");
+
+            _publisher.Publish(new TestMessage(7));
+
+            Assert.AreEqual(UniTaskStatus.Succeeded, task.Status);
+        }
+
+        [Test]
+        public void WaitFor_NullPredicate_Throws()
+        {
+            ProbeStep probe = InjectedProbe();
+
+            Assert.Throws<ArgumentNullException>(() => probe.WaitForMessagePublic(null, CancellationToken.None));
+        }
 
         [UnityTest]
         public IEnumerator WaitForAdvanceClick_CompletesOnOverlayAdvance() => UniTask.ToCoroutine(async () =>

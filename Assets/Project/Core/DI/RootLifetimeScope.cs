@@ -15,6 +15,7 @@ using Assets.Project.Features.Tutorial.Framework.Installers;
 using GDF.Currency.Config;
 using GDF.Currency.Installers.VContainer;
 using LocalDataStorage.Installers.VContainer;
+using MessagePipe;
 using SceneLoader.Installers.VContainer;
 using GDF.TimerService.Installers.VContainer;
 using UnityEngine;
@@ -51,6 +52,11 @@ namespace Assets.Project.Core.DI
         {
             if (_globalOverlayRootPrefab == null)
                 throw new InvalidOperationException($"{nameof(RootLifetimeScope)} requires {nameof(_globalOverlayRootPrefab)} to be assigned.");
+
+            // MessagePipe brokers for cross-feature domain events. Singleton brokers in the root scope
+            // are shared with every scene scope, so gameplay publishers and root subscribers (tutorial,
+            // analytics) meet on the same channel. See docs/architecture/adr-0001-messaging.md.
+            builder.RegisterMessagePipe();
 
             _sceneLoadingInstaller.Install(builder);
 
