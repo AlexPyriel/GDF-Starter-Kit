@@ -60,7 +60,7 @@
 - Префаб — минимальный scaffold
 
 **Features/Tutorial/Framework/\*** — полный tutorial framework.
-- `Services/`: TutorialService, StepRunner, HighlightRegistry, MessageWaiter (MessagePipe, с v1.3.0 вместо ActionBus/RunState), SceneWaiter, Overlay, ActiveSceneScopeHolder
+- `Services/`: TutorialService, StepRunner, HighlightRegistry, MessageWaiter (MessagePipe, с v1.3.0 вместо ActionBus/RunState), SceneWaiter (на `SceneActivatedMessage`), Overlay; `ActiveSceneScopeHolder` с v1.4.0 живёт в `Core/Infrastructure/SceneLoading`
 - `Config/`: TutorialDefinition, TutorialStepEntry
 - `Enums/`: **ETutorialHighlightKey — пустой со TODO-комментарием для клона** (NP-значения не переносятся)
 - `Interfaces/`: все

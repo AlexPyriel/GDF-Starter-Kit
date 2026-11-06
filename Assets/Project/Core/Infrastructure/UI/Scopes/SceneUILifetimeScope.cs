@@ -1,7 +1,7 @@
 using Assets.Project.Core.Infrastructure.SceneLoading;
+using Assets.Project.Core.Infrastructure.SceneLoading.Interfaces;
 using Assets.Project.Core.Infrastructure.UI.Hosts;
 using Assets.Project.Core.Infrastructure.UI.Services;
-using Assets.Project.Features.Tutorial.Framework.Interfaces;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -19,9 +19,9 @@ namespace Assets.Project.Core.Infrastructure.UI.Scopes
         private UIRoot _sceneUIRootPrefab;
 
         /// <summary>
-        /// Scene type announced by this scope on load. Published into
-        /// <see cref="IActiveSceneScopeHolder"/> — the single active-scene signal for the tutorial
-        /// framework (the scene scope is both the signal source and the holder of the scene DI resolver).
+        /// Scene type announced by this scope on load. Registered in <see cref="IActiveSceneScopeHolder"/>,
+        /// which then publishes <c>SceneActivatedMessage</c> (the scene scope is both the signal source
+        /// and the holder of the scene DI resolver).
         /// </summary>
         protected abstract ESceneType SceneType { get; }
 
@@ -29,10 +29,10 @@ namespace Assets.Project.Core.Infrastructure.UI.Scopes
         {
             base.Awake();
 
-            // Publish active scene + its resolver: the holder raises the signal in the same call for
-            // TutorialSceneWaiter. The resolver is set BEFORE the signal, so the runner injects the step
-            // with the correct scene resolver. The holder is a root-scope singleton; in contexts without
-            // it (tests, bare scene) this is a no-op.
+            // Register active scene + its resolver: the holder publishes SceneActivatedMessage in the same
+            // call. The resolver is set BEFORE the message, so the tutorial runner injects the step with
+            // the correct scene resolver. The holder is a root-scope singleton; in contexts without it
+            // (tests, bare scene) this is a no-op.
             if (Container != null && Container.TryResolve(out IActiveSceneScopeHolder sceneScopeHolder))
             {
                 sceneScopeHolder.SetActive(SceneType, Container);

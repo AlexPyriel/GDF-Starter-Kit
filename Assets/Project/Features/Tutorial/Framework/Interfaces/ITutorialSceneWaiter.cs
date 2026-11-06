@@ -1,5 +1,6 @@
 using System.Threading;
 using Assets.Project.Core.Infrastructure.SceneLoading;
+using Assets.Project.Core.Infrastructure.SceneLoading.Interfaces;
 using Cysharp.Threading.Tasks;
 
 namespace Assets.Project.Features.Tutorial.Framework.Interfaces

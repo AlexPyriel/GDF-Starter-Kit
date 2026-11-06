@@ -43,8 +43,7 @@ namespace Assets.Project.Features.Tutorial.Framework.Installers
             // Progress (PlayerPrefs by default; swap with a game-save-backed service for a concrete game).
             builder.Register<PlayerPrefsTutorialProgressService>(Lifetime.Singleton).As<ITutorialProgressService>();
 
-            // Active-scene signal (option A: source — the scene scope that calls SetActive).
-            builder.Register<ActiveSceneScopeHolder>(Lifetime.Singleton).As<IActiveSceneScopeHolder>();
+            // Scene gate on top of the Core active-scene holder (SceneLoadingInstaller) and SceneActivatedMessage.
             builder.Register<TutorialSceneWaiter>(Lifetime.Singleton).As<ITutorialSceneWaiter>();
 
             // Highlight registry (TutorialHighlightGroup tags find targets by key). EAGER (entry point):

@@ -1,10 +1,11 @@
 using System;
 using System.Threading;
-using Assets.Project.Core.Infrastructure.SceneLoading;
+using Assets.Project.Core.Infrastructure.SceneLoading.Messages;
 using Assets.Project.Features.Tutorial.Framework.Config;
 using Assets.Project.Features.Tutorial.Framework.Interfaces;
 using Assets.Project.Features.Tutorial.Progress;
 using Cysharp.Threading.Tasks;
+using MessagePipe;
 using UnityEngine;
 using VContainer.Unity;
 
@@ -23,26 +24,27 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
         private readonly ITutorialDefinition _definition;
         private readonly TutorialStepRunner _runner;
         private readonly ITutorialProgressService _progress;
-        private readonly IActiveSceneScopeHolder _sceneScopeHolder;
+        private readonly ISubscriber<SceneActivatedMessage> _sceneActivated;
 
+        private IDisposable _sceneActivatedSubscription;
         private CancellationTokenSource _loopCts;
 
         /// <summary>Creates the service.</summary>
         /// <param name="definition">Single tutorial definition (injected).</param>
         /// <param name="runner">Step runner.</param>
         /// <param name="progress">Progress: completion flag and cursor.</param>
-        /// <param name="sceneScopeHolder">Active-scene change signal (auto-start).</param>
+        /// <param name="sceneActivated">Active-scene change message (auto-start).</param>
         /// <exception cref="ArgumentNullException">Any dependency is <see langword="null"/>.</exception>
         public TutorialService(
             ITutorialDefinition definition,
             TutorialStepRunner runner,
             ITutorialProgressService progress,
-            IActiveSceneScopeHolder sceneScopeHolder)
+            ISubscriber<SceneActivatedMessage> sceneActivated)
         {
             _definition = definition ?? throw new ArgumentNullException(nameof(definition));
             _runner = runner ?? throw new ArgumentNullException(nameof(runner));
             _progress = progress ?? throw new ArgumentNullException(nameof(progress));
-            _sceneScopeHolder = sceneScopeHolder ?? throw new ArgumentNullException(nameof(sceneScopeHolder));
+            _sceneActivated = sceneActivated ?? throw new ArgumentNullException(nameof(sceneActivated));
         }
 
         /// <summary>
@@ -69,13 +71,14 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
         public void Initialize()
         {
             // Auto-start on active-scene change: the runner itself waits for the current step's required scene.
-            _sceneScopeHolder.ActiveSceneChanged += OnActiveSceneChanged;
+            _sceneActivatedSubscription = _sceneActivated.Subscribe(OnSceneActivated);
         }
 
         /// <inheritdoc />
         public void Dispose()
         {
-            _sceneScopeHolder.ActiveSceneChanged -= OnActiveSceneChanged;
+            _sceneActivatedSubscription?.Dispose();
+            _sceneActivatedSubscription = null;
             CancelRun();
         }
 
@@ -130,7 +133,7 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
             _runner.CancelCurrentStep();
         }
 
-        private void OnActiveSceneChanged(ESceneType scene)
+        private void OnSceneActivated(SceneActivatedMessage message)
         {
             TryStart();
         }

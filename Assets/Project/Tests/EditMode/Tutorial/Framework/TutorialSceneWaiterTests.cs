@@ -2,9 +2,11 @@ using System;
 using System.Collections;
 using System.Threading;
 using Assets.Project.Core.Infrastructure.SceneLoading;
-using Assets.Project.Features.Tutorial.Framework.Interfaces;
+using Assets.Project.Core.Infrastructure.SceneLoading.Messages;
+using Assets.Project.Core.Infrastructure.SceneLoading.Services;
 using Assets.Project.Features.Tutorial.Framework.Services;
 using Cysharp.Threading.Tasks;
+using MessagePipe;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 using VContainer;
@@ -14,24 +16,39 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
     /// <summary>
     /// Exercises <see cref="ActiveSceneScopeHolder"/> and <see cref="TutorialSceneWaiter"/>: active
     /// state, immediate/deferred wait completion, foreign scene ignore, cancellation, and the key
-    /// invariant: the resolver is set BEFORE the active-scene event is raised.
+    /// invariant: the resolver is set BEFORE <see cref="SceneActivatedMessage"/> is published. Runs on a
+    /// real MessagePipe broker.
     /// </summary>
     public sealed class TutorialSceneWaiterTests
     {
+        private IObjectResolver _container;
+        private ISubscriber<SceneActivatedMessage> _sceneActivated;
         private ActiveSceneScopeHolder _holder;
         private TutorialSceneWaiter _waiter;
 
         [SetUp]
         public void SetUp()
         {
-            _holder = new ActiveSceneScopeHolder();
-            _waiter = new TutorialSceneWaiter(_holder);
+            ContainerBuilder builder = new ContainerBuilder();
+            builder.RegisterMessagePipe();
+            _container = builder.Build();
+            _sceneActivated = _container.Resolve<ISubscriber<SceneActivatedMessage>>();
+            _holder = new ActiveSceneScopeHolder(_container.Resolve<IPublisher<SceneActivatedMessage>>());
+            _waiter = new TutorialSceneWaiter(_holder, _sceneActivated);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            _container.Dispose();
         }
 
         [Test]
-        public void Ctor_NullHolder_Throws()
+        public void Ctor_NullDependency_Throws()
         {
-            Assert.Throws<ArgumentNullException>(() => new TutorialSceneWaiter(null));
+            Assert.Throws<ArgumentNullException>(() => new ActiveSceneScopeHolder(null));
+            Assert.Throws<ArgumentNullException>(() => new TutorialSceneWaiter(null, _sceneActivated));
+            Assert.Throws<ArgumentNullException>(() => new TutorialSceneWaiter(_holder, null));
         }
 
         [Test]
@@ -46,21 +63,24 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
         }
 
         [Test]
-        public void SetActive_ResolverAvailableBeforeEvent()
+        public void SetActive_ResolverAvailableBeforeMessage()
         {
             IObjectResolver resolver = new ContainerBuilder().Build();
-            IObjectResolver resolverAtEvent = null;
-            ESceneType? sceneAtEvent = null;
-            _holder.ActiveSceneChanged += _ =>
+            IObjectResolver resolverAtMessage = null;
+            ESceneType? sceneAtMessage = null;
+            ESceneType? publishedScene = null;
+            using IDisposable subscription = _sceneActivated.Subscribe(message =>
             {
-                resolverAtEvent = _holder.ActiveResolver;
-                sceneAtEvent = _holder.ActiveScene;
-            };
+                resolverAtMessage = _holder.ActiveResolver;
+                sceneAtMessage = _holder.ActiveScene;
+                publishedScene = message.SceneType;
+            });
 
             _holder.SetActive(ESceneType.Game, resolver);
 
-            Assert.AreSame(resolver, resolverAtEvent, "Resolver must be set BEFORE the event.");
-            Assert.AreEqual(ESceneType.Game, sceneAtEvent, "Scene must be set BEFORE the event.");
+            Assert.AreSame(resolver, resolverAtMessage, "Resolver must be set BEFORE the message.");
+            Assert.AreEqual(ESceneType.Game, sceneAtMessage, "Scene must be set BEFORE the message.");
+            Assert.AreEqual(ESceneType.Game, publishedScene);
             resolver.Dispose();
         }
 

@@ -64,14 +64,14 @@
 - Alternative tween/async libs (LeanTween, iTween, raw coroutines for timing) — use DOTween + UniTask
 - Other DI/reactive frameworks (Zenject, UniRx) — use VContainer + R3 (+ MessagePipe for cross-feature domain events)
 - Hand-rolled event buses — use MessagePipe (`IPublisher<T>` / `ISubscriber<T>`); see ADR-0001 for R3 vs `event Action` vs MessagePipe
-- MessagePipe inside GDF packages — packages expose `event Action`; bridges to messages live in the consumer
+- Zenject / Reflex installers inside GDF packages — packages ship a VContainer installer only; other containers bind the `public sealed` implementations (README recipe)
 
 ## Allowed Libraries / Addons
 
 <!-- Add approved third-party dependencies here -->
-- **DI**: VContainer (`jp.hadashikick.vcontainer` 1.17)
+- **DI**: VContainer (`jp.hadashikick.vcontainer` 1.19)
 - **Async / Reactive**: UniTask (`com.cysharp.unitask`), R3 (`com.cysharp.r3` — reactive streams)
-- **Messaging**: MessagePipe (`com.cysharp.messagepipe` + `com.cysharp.messagepipe.vcontainer` 1.8.2) — cross-feature domain events, registered once in `RootLifetimeScope`
+- **Messaging**: MessagePipe (`com.cysharp.messagepipe` + `com.cysharp.messagepipe.vcontainer` 1.8.2) — cross-feature domain events, registered once in `RootLifetimeScope`; GDF Currency / Ads / TimerService publish their facts through it
 - **Tweening / animation**: DOTween (Demigiant, `Assets/Plugins/Demigiant/DOTween`), Timeline (`com.unity.timeline`)
 - **Assets / loading**: Unity Addressables (`com.unity.addressables` 2.9) + `com.gdf.addressable-asset-loader`
 - **GDF infrastructure packages**: `com.gdf.scene-loader`, `com.gdf.config-repository`, `com.gdf.local-data-storage`, `com.gdf.audio`

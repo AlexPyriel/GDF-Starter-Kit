@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Assets.Project.Core.Infrastructure.SceneLoading;
+using Assets.Project.Core.Infrastructure.SceneLoading.Interfaces;
 using Assets.Project.Features.Tutorial.Framework.Enums;
 using Assets.Project.Features.Tutorial.Framework.Interfaces;
 using Assets.Project.Features.Tutorial.Progress;
@@ -108,7 +109,7 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
         }
     }
 
-    /// <summary>Fake holder: returns the given resolver, logging when it is accessed (used to verify inject order).</summary>
+    /// <summary>Fake holder: returns the given resolver, logging when it is accessed (used to verify inject order). Publishes nothing.</summary>
     internal sealed class FakeSceneScopeHolder : IActiveSceneScopeHolder
     {
         private readonly List<string> _log;
@@ -131,11 +132,8 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
             }
         }
 
-        public event Action<ESceneType> ActiveSceneChanged;
-
         public void SetActive(ESceneType scene, IObjectResolver resolver)
         {
-            ActiveSceneChanged?.Invoke(scene);
         }
     }
 

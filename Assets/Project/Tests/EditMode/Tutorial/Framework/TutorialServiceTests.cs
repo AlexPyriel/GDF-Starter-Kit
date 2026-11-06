@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Assets.Project.Core.Infrastructure.SceneLoading;
+using Assets.Project.Core.Infrastructure.SceneLoading.Messages;
 using Assets.Project.Features.Tutorial.Framework.Interfaces;
 using Assets.Project.Features.Tutorial.Framework.Services;
 using Cysharp.Threading.Tasks;
+using MessagePipe;
 using NUnit.Framework;
 using VContainer;
 
@@ -23,12 +25,18 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
         private IObjectResolver _resolver;
         private FakeProgress _progress;
         private FakeSceneScopeHolder _holder;
+        private IPublisher<SceneActivatedMessage> _sceneActivatedPublisher;
+        private ISubscriber<SceneActivatedMessage> _sceneActivated;
 
         [SetUp]
         public void SetUp()
         {
             _log = new List<string>();
-            _resolver = new ContainerBuilder().Build();
+            ContainerBuilder builder = new ContainerBuilder();
+            builder.RegisterMessagePipe();
+            _resolver = builder.Build();
+            _sceneActivatedPublisher = _resolver.Resolve<IPublisher<SceneActivatedMessage>>();
+            _sceneActivated = _resolver.Resolve<ISubscriber<SceneActivatedMessage>>();
             _progress = new FakeProgress(_log);
             _holder = new FakeSceneScopeHolder(_log, _resolver);
         }
@@ -46,7 +54,7 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
 
         private TutorialService CreateService(ITutorialDefinition definition)
         {
-            return new TutorialService(definition, CreateRunner(), _progress, _holder);
+            return new TutorialService(definition, CreateRunner(), _progress, _sceneActivated);
         }
 
         private ITutorialDefinition MakeDefinition(bool skip, params ITutorialStep[] steps)
@@ -66,9 +74,9 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
             ITutorialDefinition definition = MakeDefinition(false);
             TutorialStepRunner runner = CreateRunner();
 
-            Assert.Throws<ArgumentNullException>(() => new TutorialService(null, runner, _progress, _holder));
-            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, null, _progress, _holder));
-            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, runner, null, _holder));
+            Assert.Throws<ArgumentNullException>(() => new TutorialService(null, runner, _progress, _sceneActivated));
+            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, null, _progress, _sceneActivated));
+            Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, runner, null, _sceneActivated));
             Assert.Throws<ArgumentNullException>(() => new TutorialService(definition, runner, _progress, null));
         }
 
@@ -207,7 +215,7 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
 
             Assert.AreEqual(0, a.ExecuteCount, "Before the scene signal the tutorial does not start.");
 
-            _holder.SetActive(ESceneType.Game, _resolver); // raises ActiveSceneChanged
+            _sceneActivatedPublisher.Publish(new SceneActivatedMessage(ESceneType.Game));
 
             Assert.AreEqual(1, a.ExecuteCount, "On scene change the tutorial auto-starts.");
             Assert.IsTrue(service.IsCompleted);
@@ -223,7 +231,7 @@ namespace Assets.Project.Tests.EditMode.Tutorial.Framework
             service.Initialize();
             service.Dispose();
 
-            _holder.SetActive(ESceneType.Game, _resolver);
+            _sceneActivatedPublisher.Publish(new SceneActivatedMessage(ESceneType.Game));
 
             Assert.AreEqual(0, a.ExecuteCount, "After Dispose the scene signal must not start the tutorial.");
         }

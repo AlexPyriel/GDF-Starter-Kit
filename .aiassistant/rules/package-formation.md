@@ -14,9 +14,22 @@ Use this rule when preparing a Unity package structure for future extraction, gi
 - **Installer sub-namespace: `GDF.<Package>.Installers.<Container>`** (напр. `GDF.Analytics.Installers.VContainer`). Короткий финальный сегмент, совпадающий с именем DI-пакета, допустим — Unity это терпит благодаря отдельным `.ref.dll`.
 - **Asmdef `name` = полный namespace** (`GDF.Analytics`, `GDF.Analytics.Installers.VContainer`); имя файла asmdef совпадает с полем `name`.
 
-## Installer-asmdef для опциональных DI (критично)
+## Только VContainer-инсталлер, реализации `public sealed` (критично)
 
-Инсталляторы (VContainer/Zenject/Reflex) **должны компилироваться только когда DI-пакет действительно установлен**, иначе консьюмер без этого DI падает с CS0246. Паттерн:
+- Пакет поставляет **один** инсталлер — `Installers/VContainer/`. Zenject/Reflex-инсталлеры не создаются.
+- Реализации сервисов — **`public sealed`** с публичным конструктором, принимающим только публичные типы (конфиг, интерфейсы, `IPublisher<T>`). Хелперы (бэкенды, шифрование, реестры, состояния) остаются `internal`. Если зависимость конструктора — шов для подмены (напр. `IAddressableSceneLoader`), она становится публичным интерфейсом.
+- В README раздел **«Using with Zenject / Reflex»** с биндингами публичных типов (Zenject: `Bind<I>().To<T>()`, брокеры через `MessagePipe.Zenject`; Reflex: `AddSingleton(typeof(T), typeof(I))`, брокеры через `BuiltinContainerBuilder`).
+
+## MessagePipe-нативные пакеты
+
+- Доменные факты пакета (изменился баланс, завершился таймер, досмотрена реклама) публикуются через `IPublisher<T>` из конструктора, а не `event Action`. Технические/частые уведомления (`ProgressChanged`, `VolumeChanged`, `DataSaved`) остаются `event Action` — см. ADR-0001 кита.
+- Сообщения — `readonly struct` `<Subject><PastTenseVerb>Message`, по одному на файл, в `Runtime/Messages/`, namespace `GDF.<Package>.Messages`, с XML-доками.
+- Runtime asmdef ссылается на `MessagePipe`; `package.json` — зависимость `com.cysharp.messagepipe`. VContainer-инсталлер **не** вызывает `RegisterMessagePipe()` — это делает корневой scope консьюмера один раз.
+- Тесты пакета работают на настоящем брокере через `BuiltinContainerBuilder` (`AddMessagePipe`, `AddMessageBroker<T>`, `BuildServiceProvider`), без зависимости от VContainer.
+
+## Installer-asmdef для опционального DI (критично)
+
+VContainer-инсталлер **должен компилироваться только когда VContainer действительно установлен**, иначе консьюмер без него падает с CS0246. Паттерн:
 
 ```json
 {
@@ -31,8 +44,8 @@ Use this rule when preparing a Unity package structure for future extraction, gi
 ```
 
 - `defineConstraints` указывает: ассембли компилируется только когда define установлен.
-- `versionDefines` устанавливает define при наличии нужного UPM-пакета (`jp.hadashikick.vcontainer` для VContainer, `com.svermeulen.extenject` для Zenject, `com.gustavopsantos.reflex` для Reflex).
-- Define должен быть **уникален для каждого пакета+DI** (`ANALYTICS_VCONTAINER`, `CURRENCY_ZENJECT`, …), иначе коллизии между пакетами.
+- `versionDefines` устанавливает define при наличии UPM-пакета `jp.hadashikick.vcontainer`.
+- Define должен быть **уникален для каждого пакета** (`ANALYTICS_VCONTAINER`, `CURRENCY_VCONTAINER`, …), иначе коллизии между пакетами.
 
 ## VContainer: IInstaller живёт в `VContainer.Unity`
 
@@ -71,7 +84,7 @@ namespace GDF.<Package>.Installers.VContainer
 - `LICENSE.md`
 - `CHANGELOG.md`
 - `Runtime/*.asmdef`
-- `Runtime/AssemblyInfo.cs` when `internal` runtime types must be exposed to package-owned installers or tests.
+- `Runtime/AssemblyInfo.cs` when `internal` runtime types must be exposed to package-owned tests.
 - `Tests/EditMode/*.asmdef` and test files only when package tests are needed.
 - Store the scaffold under `Packages/com.<name>` by default.
 
@@ -80,7 +93,7 @@ namespace GDF.<Package>.Installers.VContainer
 - Package metadata files stay at the package root.
 - Runtime code lives under `Runtime/`.
 - Editor-only code lives under `Editor/`.
-- Package DI integrations live under `Installers/<Container>/`.
+- The package DI integration lives under `Installers/VContainer/`.
 - Package tests live under `Tests/EditMode/` and `Tests/PlayMode/` when needed.
 - Public contracts can live under `Runtime/Interfaces/`.
 - Concrete runtime implementations and helper internals can live under `Runtime/Internal/`.
@@ -108,9 +121,9 @@ namespace GDF.<Package>.Installers.VContainer
 
 - Prefer a dedicated runtime asmdef early when package work is intended to become a reusable assembly.
 - Place the main runtime asmdef under `Runtime/`.
-- Installer assemblies should live under `Installers/<Container>/` and reference the runtime asmdef.
-- Prefer package-owned installer assemblies over exposing runtime internals to `Assembly-CSharp`.
-- Use `AssemblyInfo.cs` with `InternalsVisibleTo` for package-owned installer and test assemblies when runtime implementations stay `internal`.
+- The installer assembly lives under `Installers/VContainer/` and references the runtime asmdef (plus `MessagePipe` when the installer resolves publishers itself).
+- Service implementations are `public sealed`, so installers need no `InternalsVisibleTo`.
+- Use `AssemblyInfo.cs` with `InternalsVisibleTo` only for the package test assembly that exercises `internal` helpers.
 - Use a separate test asmdef for package EditMode tests.
 - Test asmdefs should reference the runtime asmdef directly and include `optionalUnityReferences: ["TestAssemblies"]`.
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Assets.Project.Core.Infrastructure.SceneLoading.Interfaces;
 using Assets.Project.Features.Tutorial.Framework.Interfaces;
 using Assets.Project.Features.Tutorial.Progress;
 using Cysharp.Threading.Tasks;

@@ -2,6 +2,48 @@
 
 All notable changes to GDF Starter Kit.
 
+## [1.4.0] — 2026-11-06
+
+GDF packages publish their facts through MessagePipe; every GDF package ships a VContainer installer only,
+with `public sealed` implementations for other containers; VContainer 1.19.
+
+### Changed
+
+- `jp.hadashikick.vcontainer` 1.17.0 → 1.19.0 (bug fixes and Unity 6.2+/6.4 deprecation fixes; no API changes).
+- GDF package pins: `com.gdf.local-data-storage` v3.0.0; `com.gdf.scene-loader`, `com.gdf.audio`, `com.gdf.analytics`,
+  `com.gdf.currency`, `com.gdf.ads`, `com.gdf.timer-service` v2.0.0.
+- `IActiveSceneScopeHolder` / `ActiveSceneScopeHolder` moved from `Features/Tutorial/Framework` to
+  `Core/Infrastructure/SceneLoading` (`Interfaces` / `Services`), registered by `SceneLoadingInstaller`. Core no
+  longer depends on the tutorial feature.
+- The holder publishes `SceneActivatedMessage` instead of raising `ActiveSceneChanged`. `TutorialService` and
+  `TutorialSceneWaiter` subscribe to the message; `TutorialStepRunner` still reads `ActiveResolver`.
+- ADR-0001: "state via queries, facts via messages", the `*Message` naming rule, packages publish natively.
+  `technical-preferences.md` and `.aiassistant/rules/package-formation.md` updated to match.
+
+### Added
+
+- `SceneActivatedMessage` (`Core/Infrastructure/SceneLoading/Messages`).
+
+### Removed
+
+- `IActiveSceneScopeHolder.ActiveSceneChanged`.
+
+### Breaking — migrating a clone
+
+1. Bump `jp.hadashikick.vcontainer` to `#1.19.0` and the seven GDF package pins listed above in `Packages/manifest.json`.
+2. Currency: add a reason to every `Set` / `Add` / `Spend` / `Reset` call; replace `CurrencyChanged` handlers with
+   `ISubscriber<CurrencyChangedMessage>`.
+3. Ads: replace `RewardedWatched` with `ISubscriber<RewardedAdFinishedMessage>` filtered on
+   `Result == EAdsRewardedResult.Rewarded`, and `AdsDisabledChanged` with `ISubscriber<AdsDisabledChangedMessage>`.
+4. Timers: replace `TimerCompleted` / `TimerChanged` / `TimersChanged` with `TimerCompletedMessage` /
+   `TimerTickedMessage` / `TimerStartedMessage` subscriptions.
+5. Update `using Assets.Project.Features.Tutorial.Framework.Interfaces;` to
+   `using Assets.Project.Core.Infrastructure.SceneLoading.Interfaces;` where `IActiveSceneScopeHolder` is used, move
+   its registration to `SceneLoadingInstaller`, and replace `ActiveSceneChanged` handlers with
+   `ISubscriber<SceneActivatedMessage>`.
+6. Clones on Zenject or Reflex (none in the kit itself) copy the bindings from each package README section
+   "Using with Zenject / Reflex".
+
 ## [1.3.0] — 2026-11-04
 
 MessagePipe for cross-feature domain events; the tutorial waits on typed messages.

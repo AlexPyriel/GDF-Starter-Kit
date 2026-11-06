@@ -1,8 +1,11 @@
 using System;
 using System.Threading;
 using Assets.Project.Core.Infrastructure.SceneLoading;
+using Assets.Project.Core.Infrastructure.SceneLoading.Interfaces;
+using Assets.Project.Core.Infrastructure.SceneLoading.Messages;
 using Assets.Project.Features.Tutorial.Framework.Interfaces;
 using Cysharp.Threading.Tasks;
+using MessagePipe;
 
 namespace Assets.Project.Features.Tutorial.Framework.Services
 {
@@ -10,13 +13,16 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
     public sealed class TutorialSceneWaiter : ITutorialSceneWaiter
     {
         private readonly IActiveSceneScopeHolder _holder;
+        private readonly ISubscriber<SceneActivatedMessage> _sceneActivated;
 
-        /// <summary>Creates the waiter on top of the active-scene holder.</summary>
-        /// <param name="holder">Active-scene signal source.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="holder"/> is <see langword="null"/>.</exception>
-        public TutorialSceneWaiter(IActiveSceneScopeHolder holder)
+        /// <summary>Creates the waiter on top of the active-scene holder and its message.</summary>
+        /// <param name="holder">Active-scene state (query).</param>
+        /// <param name="sceneActivated">Active-scene change (message).</param>
+        /// <exception cref="ArgumentNullException">Any dependency is <see langword="null"/>.</exception>
+        public TutorialSceneWaiter(IActiveSceneScopeHolder holder, ISubscriber<SceneActivatedMessage> sceneActivated)
         {
             _holder = holder ?? throw new ArgumentNullException(nameof(holder));
+            _sceneActivated = sceneActivated ?? throw new ArgumentNullException(nameof(sceneActivated));
         }
 
         /// <inheritdoc />
@@ -37,16 +43,15 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
 
             UniTaskCompletionSource completionSource = new UniTaskCompletionSource();
 
-            void OnActiveSceneChanged(ESceneType active)
+            void OnSceneActivated(SceneActivatedMessage message)
             {
-                if (active == scene)
+                if (message.SceneType == scene)
                 {
                     completionSource.TrySetResult();
                 }
             }
 
-            _holder.ActiveSceneChanged += OnActiveSceneChanged;
-            try
+            using (_sceneActivated.Subscribe(OnSceneActivated))
             {
                 // Re-check after subscribing: the scene may have become active between IsActive and Subscribe.
                 if (IsActive(scene))
@@ -55,10 +60,6 @@ namespace Assets.Project.Features.Tutorial.Framework.Services
                 }
 
                 await completionSource.Task.AttachExternalCancellation(token);
-            }
-            finally
-            {
-                _holder.ActiveSceneChanged -= OnActiveSceneChanged;
             }
         }
     }
