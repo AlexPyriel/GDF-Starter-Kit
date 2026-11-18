@@ -153,3 +153,6 @@ Thumbs.db
 ehthumbs.db
 ehthumbs_vista.db
 [Dd]esktop.ini
+
+# Unity CLI (com.unity.pipeline) local editor config: per-machine port, auto-tick, run-in-background overrides
+/ProjectSettings/Packages/com.unity.pipeline/
