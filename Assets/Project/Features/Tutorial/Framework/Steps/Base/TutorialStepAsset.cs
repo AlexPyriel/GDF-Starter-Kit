@@ -278,7 +278,10 @@ namespace Assets.Project.Features.Tutorial.Framework.Steps.Base
             return Overlay.WaitForAdvanceClick(token);
         }
 
-        /// <summary>Waits for <paramref name="seconds"/> seconds (step timer), cancellable.</summary>
+        /// <summary>
+        /// Waits for <paramref name="seconds"/> seconds of game time (step timer), cancellable. The timer runs on
+        /// scaled time, so it freezes while the game is paused through <c>IGamePauseService</c>.
+        /// </summary>
         /// <param name="seconds">Delay duration in seconds (negative is treated as 0).</param>
         /// <param name="token">Cancellation token.</param>
         /// <returns>Task that completes when the delay elapses.</returns>

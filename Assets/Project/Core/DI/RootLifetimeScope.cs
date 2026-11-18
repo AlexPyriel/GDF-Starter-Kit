@@ -6,6 +6,8 @@ using Assets.Project.Core.Bootstrap;
 using Assets.Project.Core.Bootstrap.Warmup;
 using Assets.Project.Core.Bootstrap.Warmup.Steps;
 using Assets.Project.Core.DI.EntryPoints;
+using Assets.Project.Core.Infrastructure.Pause.Interfaces;
+using Assets.Project.Core.Infrastructure.Pause.Services;
 using Assets.Project.Core.Infrastructure.SceneLoading.Installers;
 using Assets.Project.Core.Infrastructure.UI.Hosts;
 using Assets.Project.Core.Infrastructure.UI.Interfaces;
@@ -91,6 +93,9 @@ namespace Assets.Project.Core.DI
             builder.Register<IStartupWarmupStep, PreloadLoadingSceneViewStep>(Lifetime.Singleton);
             builder.Register<StartupWarmupService>(Lifetime.Singleton).AsSelf().As<IStartupWarmupAwaiter>();
             builder.Register<GameRunnerService>(Lifetime.Singleton);
+
+            // Application-wide pause: owners (pause menu, ad, dialog) hold handles; the game resumes when all are released.
+            builder.Register<GamePauseService>(Lifetime.Singleton).As<IGamePauseService>();
 
             if (_tutorialInstaller != null)
                 _tutorialInstaller.Install(builder);

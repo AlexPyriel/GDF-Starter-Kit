@@ -85,13 +85,13 @@
       "hash": "1e7da208a34fa266c5317d7ea151600cd03f8e2f"
     },
     "com.gdf.audio": {
-      "version": "https://github.com/AlexPyriel/Audio.git#v2.0.0",
+      "version": "https://github.com/AlexPyriel/Audio.git#v2.1.0",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.gdf.local-data-storage": "https://github.com/AlexPyriel/LocalDataStorage.git#v3.0.0"
       },
-      "hash": "4b2a757d5c86b953656e71a1b957f3cd3408edbb"
+      "hash": "7993dc1c75fa895896c2c2cd5b4d3d75e2264b23"
     },
     "com.gdf.config-import": {
       "version": "https://github.com/AlexPyriel/ConfigImport.git#v1.0.0",

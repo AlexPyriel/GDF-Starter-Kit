@@ -2,6 +2,36 @@
 
 All notable changes to GDF Starter Kit.
 
+## [1.5.0] — 2026-11-18
+
+Application-wide game pause: time and gameplay audio freeze, music and pause-menu UI sounds keep playing.
+
+### Added
+
+- `IGamePauseService` / `GamePauseService` (`Core/Infrastructure/Pause`), a root singleton registered in
+  `RootLifetimeScope`. `Pause(reason)` returns a handle; the first handle sets `Time.timeScale = 0` and
+  `AudioListener.pause = true`, releasing the last one restores the previous time scale. Overlapping owners (pause
+  menu, ad, dialog) never resume each other. A scene that activates while handles are held logs a warning with
+  their reasons.
+- `GamePausedMessage` / `GameResumedMessage` (`Core/Infrastructure/Pause/Messages`), published after the state is
+  applied, for systems that do not follow the time scale (network objects, custom timers, video).
+
+### Changed
+
+- `com.gdf.audio` v2.0.0 → v2.1.0 (`SfxCue.IgnoreListenerPause` / `MusicCue.IgnoreListenerPause`).
+- `GameScenePresenter` holds a pause handle for exactly as long as `GamePausePanel` exists, so resume, a backdrop
+  click, exit to Home and scene unload all resume the game. A second click on the pause button no longer opens the
+  panel twice.
+- `GameRunnerService` waits on the loading screen in unscaled time, so a scene transition never stalls on a pause.
+- `TutorialStepAsset.Delay` documents that it runs on scaled time and freezes during a pause.
+
+### Upgrading a clone
+
+1. Bump `com.gdf.audio` to `#v2.1.0` in `Packages/manifest.json`.
+2. Set `IgnoreListenerPause = true` on the `SfxCue`s of UI sounds that must stay audible in a pause menu; gameplay
+   SFX freeze by default, music keeps playing by default.
+3. Online games that must not freeze locally keep opening their menu without calling `IGamePauseService.Pause`.
+
 ## [1.4.0] — 2026-11-06
 
 GDF packages publish their facts through MessagePipe; every GDF package ships a VContainer installer only,

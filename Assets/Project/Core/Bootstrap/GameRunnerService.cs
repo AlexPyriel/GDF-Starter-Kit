@@ -116,7 +116,8 @@ namespace Assets.Project.Core.Bootstrap
 
                 loadingSceneNeedsCleanup = true;
 
-                await UniTask.Delay(TimeSpan.FromSeconds(1));
+                // Real time: a scene transition must never stall on Time.timeScale = 0 left by a pause.
+                await UniTask.Delay(TimeSpan.FromSeconds(1), DelayType.UnscaledDeltaTime);
 
                 loadResult = await _sceneLoaderService.LoadScene(
                     targetSceneReference,
